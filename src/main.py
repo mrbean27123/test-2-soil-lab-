@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from apps.identity.api import router as identity_app_router
 from apps.soil_laboratory.api import router as soil_laboratory_app_router
@@ -23,6 +24,15 @@ app = FastAPI(title=settings.APP_NAME)
 # NOTE: Middlewares are applied in **reverse order** (last added == outermost).
 # The first middleware added becomes the **innermost** in the actual execution chain.
 # So logging should go around error handling to ensure request is properly logged.
+
+# TODO: Remove this:
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_middleware(JWTAuthenticationMiddleware, jwt_manager=get_jwt_manager())  # Innermost middleware
 app.add_middleware(ErrorHandlingMiddleware, logger=logger)
