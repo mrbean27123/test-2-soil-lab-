@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:17
+    container_name: soil-laboratory-app-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    volumes:
+      - soil-laboratory-app-postgres-data:/var/lib/postgresql/data
+    networks:
+      - soil-laboratory-app-network
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  soil-laboratory-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soil-laboratory-app
+    restart: unless-stopped
+    ports:
+      - "${APP_EXTERNAL_PORT:-8000}:${APP_PORT:-8000}"
+    volumes:
+      # For development - mount the code for hot reload
+      - ./src:/usr/src/app/src
+      # For logs (optional)
+      # - ./logs:/usr/src/app/logs
+    working_dir: /usr/src/app
+    networks:
+      - soil-laboratory-app-network
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  soil-laboratory-app-postgres-data:
+    name: soil-laboratory-app-postgres-data
+
+networks:
+  soil-laboratory-app-network:
+    driver: bridge
+    name: soil-laboratory-app-network
