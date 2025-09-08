@@ -25,6 +25,10 @@ app = FastAPI(title=settings.APP_NAME)
 # The first middleware added becomes the **innermost** in the actual execution chain.
 # So logging should go around error handling to ensure request is properly logged.
 
+app.add_middleware(JWTAuthenticationMiddleware, jwt_manager=get_jwt_manager())  # Innermost middleware
+app.add_middleware(ErrorHandlingMiddleware, logger=logger)
+app.add_middleware(RequestLoggingMiddleware, logger=logger)  # Outermost middleware
+
 # TODO: Remove this:
 app.add_middleware(
     CORSMiddleware,
@@ -33,10 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(JWTAuthenticationMiddleware, jwt_manager=get_jwt_manager())  # Innermost middleware
-app.add_middleware(ErrorHandlingMiddleware, logger=logger)
-app.add_middleware(RequestLoggingMiddleware, logger=logger)  # Outermost middleware
 
 app.include_router(identity_app_router, prefix="/api")
 app.include_router(soil_laboratory_app_router, prefix="/api")
