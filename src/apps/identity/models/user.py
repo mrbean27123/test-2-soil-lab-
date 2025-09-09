@@ -46,6 +46,8 @@ class User(BaseORM, BusinessEntityMetadataMixin):
     @classmethod
     def create(
         cls,
+        first_name: str,
+        last_name: str,
         email: str,
         raw_password: str,
         is_active: bool = True,
@@ -57,7 +59,13 @@ class User(BaseORM, BusinessEntityMetadataMixin):
         This method simplifies the creation of a new user by handling password hashing and setting
         required attributes.
         """
-        user = cls(email=email, is_active=is_active, is_superuser=is_superuser)
+        user = cls(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            is_active=is_active,
+            is_superuser=is_superuser
+        )
         user.password = raw_password
 
         return user

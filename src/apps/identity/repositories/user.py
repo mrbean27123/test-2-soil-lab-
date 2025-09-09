@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Load, selectinload
 
+from apps.identity.dto import UserCreateDTO
 from apps.identity.models import User
 from repositories.base import (
     BaseRepository,
@@ -44,6 +45,12 @@ class UserRepository(
 
     def __init__(self, db: AsyncSession):
         super().__init__(db, User)
+
+    async def create(self, user_data: UserCreateDTO) -> User:
+        user = User.create(**user_data.model_dump())
+        self.db.add(user)
+
+        return user
 
     async def get_by_email(
         self,

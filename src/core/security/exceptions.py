@@ -1,7 +1,8 @@
 """Security-related exceptions"""
+from core.exceptions import AppException
 
 
-class SecurityError(Exception):
+class SecurityError(AppException):
     """Base exception for security-related errors"""
     status_code = 500
     default_message = "Internal server error"
