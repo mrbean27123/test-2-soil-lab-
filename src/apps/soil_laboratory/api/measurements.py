@@ -89,7 +89,20 @@ async def restore_measurement(
     return await measurement_service.restore_measurement(measurement_id)
 
 
-@router.post("/generate-report", response_class=StreamingResponse)
+@router.post(
+    "/generate-report",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "content": {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+            "description": "DOCX report file",
+        }
+    },
+)
 async def get_measurements_report(
     report_generation_request: MeasurementsReportGenerationRequest,
     measurement_report_service: MeasurementsReportService = (
