@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -94,3 +95,16 @@ class MeasurementListItemResponse(MeasurementShortResponse, BusinessEntitySchema
 
 class MeasurementListResponse(PaginatedListResponseBase[MeasurementListItemResponse]):
     pass
+
+
+class MeasurementsReportGenerationRequest(BaseModel):
+    date_from: date | None = None
+    date_to: date | None = None
+
+
+class MeasurementsReportGenerationResponse(BaseModel):
+    success: bool
+    message: str
+    file_name: str
+    total_records: int
+    generated_at: datetime

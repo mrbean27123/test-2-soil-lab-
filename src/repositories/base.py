@@ -232,6 +232,21 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
 
         return list(result.scalars().all())
 
+    async def get_all(
+        self: IsBaseRepository[ModelT],
+        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
+        include: list[LoadOptionsT] | None = None
+    ) -> list[ModelT]:
+        stmt = select(self.model)
+
+        if where_conditions:
+            stmt = stmt.where(and_(*where_conditions))
+
+        stmt = self._apply_load_options(stmt, include)
+        result = await self.db.execute(stmt)
+
+        return list(result.scalars().all())
+
 
 class ReadByIdMixin(Generic[ModelT, LoadOptionsT]):
     async def get_by_id(
