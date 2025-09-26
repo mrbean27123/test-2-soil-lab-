@@ -1,16 +1,17 @@
-# docker-compose.yml (минимальная правка — оставляю твои container_name/name)
+# docker-compose.yml — ТОЧНО та же структура, но имена через COMPOSE_PROJECT_NAME
 services:
   db:
     image: postgres:17
-    container_name: soil-laboratory-app-postgres-2
+    container_name: "${COMPOSE_PROJECT_NAME}_postgres" # было: soil-laboratory-app-postgres
     restart: unless-stopped
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:${POSTGRES_PORT:-5432}"
     volumes:
-      - soil-laboratory-app-postgres-data:/var/lib/postgresql/data # <-- ключ секции volumes
+      - soil-laboratory-app-postgres-data:/var/lib/postgresql/data
     networks:
-      - soil-laboratory-app-network # <-- ключ секции networks
-    env_file: [.env]
+      - soil-laboratory-app-network
+    env_file:
+      - .env
     healthcheck:
       test:
         [
@@ -26,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: soil-laboratory-app-2
+    container_name: "${COMPOSE_PROJECT_NAME}_app" # было: soil-laboratory-app
     restart: unless-stopped
     ports:
       - "${APP_EXTERNAL_PORT:-8000}:${APP_PORT:-8000}"
@@ -34,17 +35,18 @@ services:
       - ./src:/usr/src/app/src
     working_dir: /usr/src/app
     networks:
-      - soil-laboratory-app-network # <-- ключ секции networks
+      - soil-laboratory-app-network
     depends_on:
       db:
         condition: service_healthy
-    env_file: [.env]
+    env_file:
+      - .env
 
 volumes:
   soil-laboratory-app-postgres-data:
-    name: soil-laboratory-app-postgres-data-2 # глобальное имя (не обязательно)
+    name: "${COMPOSE_PROJECT_NAME}_soil-laboratory-app-postgres-data" # было: soil-laboratory-app-postgres-data
 
 networks:
   soil-laboratory-app-network:
     driver: bridge
-    name: soil-laboratory-app-network-2 # глобальное имя (не обязательно)
+    name: "${COMPOSE_PROJECT_NAME}_soil-laboratory-app-network" # было: soil-laboratory-app-network
