@@ -46,9 +46,9 @@ services:
 
 volumes:
   soil-laboratory-app-postgres-data:
-    name: soil-laboratory-app-postgres-data-2
+    name: soil-laboratory-app-postgres-data
 
 networks:
   soil-laboratory-app-network:
     driver: bridge
-    name: soil-laboratory-app-network-2
+    name: soil-laboratory-app-network
