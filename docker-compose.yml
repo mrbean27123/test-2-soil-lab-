@@ -1,3 +1,4 @@
+# docker-compose.yml (минимальная правка — оставляю твои container_name/name)
 services:
   db:
     image: postgres:17
@@ -6,11 +7,10 @@ services:
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:${POSTGRES_PORT:-5432}"
     volumes:
-      - soil-laboratory-app-postgres-data-2:/var/lib/postgresql/data
+      - soil-laboratory-app-postgres-data:/var/lib/postgresql/data # <-- ключ секции volumes
     networks:
-      - soil-laboratory-app-network-2
-    env_file:
-      - .env
+      - soil-laboratory-app-network # <-- ключ секции networks
+    env_file: [.env]
     healthcheck:
       test:
         [
@@ -31,24 +31,20 @@ services:
     ports:
       - "${APP_EXTERNAL_PORT:-8000}:${APP_PORT:-8000}"
     volumes:
-      # For development - mount the code for hot reload
       - ./src:/usr/src/app/src
-      # For logs (optional)
-      # - ./logs:/usr/src/app/logs
     working_dir: /usr/src/app
     networks:
-      - soil-laboratory-app-network-2
+      - soil-laboratory-app-network # <-- ключ секции networks
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
+    env_file: [.env]
 
 volumes:
   soil-laboratory-app-postgres-data:
-    name: soil-laboratory-app-postgres-data-2
+    name: soil-laboratory-app-postgres-data-2 # глобальное имя (не обязательно)
 
 networks:
   soil-laboratory-app-network:
     driver: bridge
-    name: soil-laboratory-app-network-2
+    name: soil-laboratory-app-network-2 # глобальное имя (не обязательно)
