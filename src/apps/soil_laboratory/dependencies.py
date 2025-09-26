@@ -1,24 +1,39 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.soil_laboratory.repositories.measurement import MeasurementRepository
-from apps.soil_laboratory.services.measurement import MeasurementService
-from apps.soil_laboratory.services.reports.measurement_reports import MeasurementsReportService
+from apps.soil_laboratory.repositories.sample import SampleRepository
+from apps.soil_laboratory.repositories.test import TestRepository
+from apps.soil_laboratory.services.sample import SampleService
+from apps.soil_laboratory.services.reports.sample_report import SampleReportService
+
+from apps.soil_laboratory.services.test import TestService
 from database.dependencies import get_postgresql_db_session as get_db_session
 
 
-def get_measurement_repository(db: AsyncSession = Depends(get_db_session)) -> MeasurementRepository:
-    return MeasurementRepository(db)
+def get_sample_repository(db: AsyncSession = Depends(get_db_session)) -> SampleRepository:
+    return SampleRepository(db)
 
 
-def get_measurement_service(
+def get_test_repository(db: AsyncSession = Depends(get_db_session)) -> TestRepository:
+    return TestRepository(db)
+
+
+def get_sample_service(
     db: AsyncSession = Depends(get_db_session),
-    measurement_repo: MeasurementRepository = Depends(get_measurement_repository)
-) -> MeasurementService:
-    return MeasurementService(db, measurement_repo)
+    sample_repo: SampleRepository = Depends(get_sample_repository)
+) -> SampleService:
+    return SampleService(db, sample_repo)
 
 
-def get_measurements_report_service(
-    measurement_repo: MeasurementRepository = Depends(get_measurement_repository)
-) -> MeasurementsReportService:
-    return MeasurementsReportService(measurement_repo)
+def get_sample_report_service(
+    sample_repo: SampleRepository = Depends(get_sample_repository)
+) -> SampleReportService:
+    return SampleReportService(sample_repo)
+
+
+def get_test_service(
+    db: AsyncSession = Depends(get_db_session),
+    test_repo: TestRepository = Depends(get_test_repository),
+    sample_repo: SampleRepository = Depends(get_sample_repository)
+) -> TestService:
+    return TestService(db, test_repo, sample_repo)

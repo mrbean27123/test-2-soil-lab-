@@ -35,14 +35,23 @@ from apps.identity.schemas.user import (  # noqa: F401
     UserShortResponse,
     UserUpdate
 )
-from apps.soil_laboratory.schemas.measurement import (  # noqa: F401
-    MeasurementCreate,
-    MeasurementDetailResponse,
-    MeasurementListItemResponse,
-    MeasurementListResponse,
-    MeasurementLookupResponse,
-    MeasurementShortResponse,
-    MeasurementUpdate
+from apps.soil_laboratory.schemas.sample import (  # noqa: F401
+    SampleCreate,
+    SampleDetailResponse,
+    SampleListItemResponse,
+    SampleListResponse,
+    SampleLookupResponse,
+    SampleShortResponse,
+    SampleUpdate
+)
+from apps.soil_laboratory.schemas.test import (  # noqa: F401
+    TestCreate,
+    TestDetailResponse,
+    TestListItemResponse,
+    TestListResponse,
+    TestLookupResponse,
+    TestShortResponse,
+    TestUpdate
 )
 
 
@@ -50,6 +59,10 @@ from apps.soil_laboratory.schemas.measurement import (  # noqa: F401
 # This is required for schemas that use string type hints to avoid circular imports and ensure
 # proper OpenAPI schema generation
 schemas_to_rebuild: list[type[BaseModel]] = [
+    SampleDetailResponse,
+    TestDetailResponse,
+    SampleListItemResponse,
+
     RoleDetailResponse,
     RoleListItemResponse,
 

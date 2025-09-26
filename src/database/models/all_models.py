@@ -5,4 +5,5 @@ from apps.identity.models.role import Role
 from apps.identity.models.user import User
 
 # Soil Lab App
-from apps.soil_laboratory.models.measurement import Measurement
+from apps.soil_laboratory.models.sample import Sample
+from apps.soil_laboratory.models.test import Test

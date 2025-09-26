@@ -213,6 +213,7 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
         self: IsBaseRepository[ModelT],
         pagination: PaginationCriteria,
         where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
+        order: OrderCriteria | None = None,
         include: list[LoadOptionsT] | None = None
     ) -> list[ModelT]:
         """
@@ -226,6 +227,9 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
         if where_conditions:
             stmt = stmt.where(and_(*where_conditions))
 
+        if order:
+            stmt = stmt.order_by(order.field.asc() if order.ascending else order.field.desc())
+
         stmt = self._apply_load_options(stmt, include)
         stmt = stmt.offset(pagination.offset).limit(pagination.limit)
         result = await self.db.execute(stmt)
@@ -235,12 +239,16 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
     async def get_all(
         self: IsBaseRepository[ModelT],
         where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
+        order: OrderCriteria | None = None,
         include: list[LoadOptionsT] | None = None
     ) -> list[ModelT]:
         stmt = select(self.model)
 
         if where_conditions:
             stmt = stmt.where(and_(*where_conditions))
+
+        if order:
+            stmt = stmt.order_by(order.field.asc() if order.ascending else order.field.desc())
 
         stmt = self._apply_load_options(stmt, include)
         result = await self.db.execute(stmt)

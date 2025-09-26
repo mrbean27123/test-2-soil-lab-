@@ -37,10 +37,13 @@ class DeleteOperationBase(AtomicOperationBase):
     id: UUID
 
 
-class PaginatedListResponseBase(BaseModel, Generic[ModelT]):
+ListItemModelT = TypeVar("ListItemModelT")
+
+
+class PaginatedListResponseBase(BaseModel, Generic[ListItemModelT]):
     model_config = ConfigDict(from_attributes=True)
 
-    data: list[ModelT]
+    data: list[ListItemModelT]
     page: int
     total_pages: int
     total_items: int
