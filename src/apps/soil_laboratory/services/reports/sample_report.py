@@ -18,7 +18,7 @@ from apps.soil_laboratory.schemas.sample import (
 from repositories.base import OrderCriteria
 
 
-class SamplesReportService:
+class SampleReportService:
     """Сервис для работы с отчетами"""
 
     def __init__(self, samples_repo: SampleRepository):
