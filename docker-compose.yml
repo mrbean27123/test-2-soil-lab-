@@ -6,9 +6,9 @@ services:
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:${POSTGRES_PORT:-5432}"
     volumes:
-      - soil-laboratory-app-postgres-data:/var/lib/postgresql/data
+      - soil-laboratory-app-postgres-data-2:/var/lib/postgresql/data
     networks:
-      - soil-laboratory-app-network
+      - soil-laboratory-app-network-2
     env_file:
       - .env
     healthcheck:
@@ -37,7 +37,7 @@ services:
       # - ./logs:/usr/src/app/logs
     working_dir: /usr/src/app
     networks:
-      - soil-laboratory-app-network
+      - soil-laboratory-app-network-2
     depends_on:
       db:
         condition: service_healthy
@@ -46,9 +46,9 @@ services:
 
 volumes:
   soil-laboratory-app-postgres-data:
-    name: soil-laboratory-app-postgres-data
+    name: soil-laboratory-app-postgres-data-2
 
 networks:
   soil-laboratory-app-network:
     driver: bridge
-    name: soil-laboratory-app-network
+    name: soil-laboratory-app-network-2
