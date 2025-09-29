@@ -55,8 +55,8 @@ class TestDetailResponse(TestResponseBase, BusinessEntitySchemaMetadataMixin):
     measurement_2: float = Field(alias="measurement2")
     measurement_3: float | None = Field(alias="measurement3")
 
-    selected_measurement_1: float = Field(alias="selected_measurement1")
-    selected_measurement_2: float = Field(alias="selected_measurement2")
+    selected_measurement_1: float = Field(alias="selectedMeasurement1")
+    selected_measurement_2: float = Field(alias="selectedMeasurement2")
 
     difference_percent: float = Field(alias="differencePercent")
     mean_measurement: float = Field(alias="meanMeasurement")
