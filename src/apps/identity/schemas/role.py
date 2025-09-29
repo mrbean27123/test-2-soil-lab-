@@ -39,7 +39,7 @@ class RoleCreate(RoleInputBase):
     name: str = Field(..., **ROLE_NAME_CONSTRAINTS)
     description: str | None = Field(None, **ROLE_DESCRIPTION_CONSTRAINTS)
 
-    permission_ids: list[UUID] | None = None
+    permission_ids: list[UUID] | None = Field(None, alias="permissionIds")
 
     def to_dto(self) -> RoleCreateDTO:
         return RoleCreateDTO(**self.model_dump(exclude={"permission_ids", }))
@@ -50,14 +50,14 @@ class RoleUpdate(RoleInputBase):
     name: str = Field(None, **ROLE_NAME_CONSTRAINTS)
     description: str | None = Field(None, **ROLE_DESCRIPTION_CONSTRAINTS)
 
-    permission_ids: list[UUID] = Field(None)
+    permission_ids: list[UUID] = Field(None, alias="permissionIds")
 
     def to_dto(self) -> RoleUpdateDTO:
         return RoleUpdateDTO(**self.model_dump(exclude={"permission_ids", }, exclude_unset=True))
 
 
 class RoleResponseBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: UUID
 

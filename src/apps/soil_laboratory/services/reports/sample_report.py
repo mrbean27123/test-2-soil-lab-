@@ -253,7 +253,7 @@ class SampleReportService:
             doc.add_paragraph()
 
         signature_paragraph = doc.add_paragraph()
-        signature_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        # signature_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         signature_paragraph.add_run("Начальник лабораторії ________")
 
         date_paragraph = doc.add_paragraph()
