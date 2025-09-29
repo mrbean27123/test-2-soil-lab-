@@ -33,8 +33,12 @@ class SampleInputBase(InputBase):
 
 
 class SampleCreate(SampleInputBase):
-    molding_sand_recipe: str = Field(..., **MOLDING_SAND_RECIPE_CONSTRAINTS)
-    received_at: datetime
+    molding_sand_recipe: str = Field(
+        ...,
+        **MOLDING_SAND_RECIPE_CONSTRAINTS,
+        alias="moldingSandRecipe"
+    )
+    received_at: datetime = Field(..., alias="receivedAt")
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
 
@@ -43,8 +47,12 @@ class SampleCreate(SampleInputBase):
 
 
 class SampleUpdate(SampleInputBase):
-    molding_sand_recipe: str = Field(None, **MOLDING_SAND_RECIPE_CONSTRAINTS)
-    received_at: datetime = Field(None)
+    molding_sand_recipe: str = Field(
+        None,
+        **MOLDING_SAND_RECIPE_CONSTRAINTS,
+        alias="moldingSandRecipe"
+    )
+    received_at: datetime = Field(None, alias="receivedAt")
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
 
@@ -53,24 +61,24 @@ class SampleUpdate(SampleInputBase):
 
 
 class SampleResponseBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: UUID
 
 
 class SampleLookupResponse(SampleResponseBase):
-    molding_sand_recipe: str
-    received_at: datetime
+    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
+    received_at: datetime = Field(alias="receivedAt")
 
 
 class SampleShortResponse(SampleResponseBase):
-    molding_sand_recipe: str
-    received_at: datetime
+    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
+    received_at: datetime = Field(alias="receivedAt")
 
 
 class SampleDetailResponse(SampleResponseBase, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str
-    received_at: datetime
+    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
+    received_at: datetime = Field(alias="receivedAt")
 
     tests: list["TestShortResponse"]
 
@@ -78,8 +86,8 @@ class SampleDetailResponse(SampleResponseBase, BusinessEntitySchemaMetadataMixin
 
 
 class SampleListItemResponse(SampleShortResponse, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str
-    received_at: datetime
+    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
+    received_at: datetime = Field(alias="receivedAt")
 
     tests: list["TestShortResponse"]
 
@@ -89,13 +97,15 @@ class SampleListResponse(PaginatedListResponseBase[SampleListItemResponse]):
 
 
 class SamplesReportGenerationRequest(BaseModel):
-    date_from: date | None = None
-    date_to: date | None = None
+    date_from: date | None = Field(alias="dateFrom")
+    date_to: date | None = Field(alias="dateTo")
 
 
 class SamplesReportGenerationResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     success: bool
     message: str
-    file_name: str
-    total_records: int
-    generated_at: datetime
+    file_name: str = Field(alias="fileName")
+    total_records: int = Field(alias="totalRecords")
+    generated_at: datetime = Field(alias="generatedAt")

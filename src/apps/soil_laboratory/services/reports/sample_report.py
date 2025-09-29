@@ -10,7 +10,7 @@ from docx.shared import Cm
 from apps.soil_laboratory.enums import TestType
 from apps.soil_laboratory.exceptions import SampleReportGenerationError
 from apps.soil_laboratory.models import Sample
-from apps.soil_laboratory.repositories.sample import SampleRepository
+from apps.soil_laboratory.repositories.sample import SampleLoadOptions, SampleRepository
 from apps.soil_laboratory.schemas.sample import (
     SamplesReportGenerationRequest,
     SamplesReportGenerationResponse
@@ -75,7 +75,8 @@ class SampleReportService:
 
         result = await self._samples_repo.get_all(
             where_conditions=conditions,
-            order=OrderCriteria(Sample.received_at)
+            order=OrderCriteria(Sample.received_at),
+            include=[SampleLoadOptions.TESTS, ]
         )
 
         return result
@@ -220,13 +221,25 @@ class SampleReportService:
             row_cells[1].text = sample.molding_sand_recipe
             row_cells[1].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            row_cells[2].text = f"{sample_measurements["strength_kgf_cm2"]:.2f}"
+            row_cells[2].text = (
+                f"{sample_measurements["strength_kgf_cm2"]:.2f}"
+                if sample_measurements["strength_kgf_cm2"]
+                else ""
+            )
             row_cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            row_cells[3].text = f"{sample_measurements["gas_permeability"]:.0f}"
+            row_cells[3].text = (
+                f"{sample_measurements["gas_permeability"]:.0f}"
+                if sample_measurements["gas_permeability"]
+                else ""
+            )
             row_cells[3].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            row_cells[4].text = f"{sample_measurements["moisture_percent"]:.2f}"
+            row_cells[4].text = (
+                f"{sample_measurements["moisture_percent"]:.2f}"
+                if sample_measurements["moisture_percent"]
+                else ""
+            )
             row_cells[4].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
             row_cells[5].text = sample.received_at.strftime("%d.%m.%y, %H:%M")

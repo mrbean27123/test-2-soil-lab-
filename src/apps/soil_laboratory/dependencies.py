@@ -3,9 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.soil_laboratory.repositories.sample import SampleRepository
 from apps.soil_laboratory.repositories.test import TestRepository
-from apps.soil_laboratory.services.sample import SampleService
 from apps.soil_laboratory.services.reports.sample_report import SampleReportService
-
+from apps.soil_laboratory.services.sample import SampleService
 from apps.soil_laboratory.services.test import TestService
 from database.dependencies import get_postgresql_db_session as get_db_session
 

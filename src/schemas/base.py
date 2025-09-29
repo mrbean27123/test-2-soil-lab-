@@ -1,13 +1,15 @@
 from typing import Generic, Literal, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class InputBase(BaseModel):
     model_config = ConfigDict(
         extra="forbid",  # 🚫 Input validation: forbid unexpected fields
         str_strip_whitespace=True,  # 🧼 String normalization (strip() all strings automatically)
+
+        populate_by_name=True
     )
 
 
@@ -41,9 +43,9 @@ ListItemModelT = TypeVar("ListItemModelT")
 
 
 class PaginatedListResponseBase(BaseModel, Generic[ListItemModelT]):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     data: list[ListItemModelT]
     page: int
-    total_pages: int
-    total_items: int
+    total_pages: int = Field(alias="totalPages")
+    total_items: int = Field(alias="totalItems")

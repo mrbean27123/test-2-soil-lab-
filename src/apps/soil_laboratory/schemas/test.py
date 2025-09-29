@@ -3,7 +3,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from apps.soil_laboratory.dto.test import TestCreateDTO, TestUpdateDTO
 from apps.soil_laboratory.enums import TestStatus, TestType
 from schemas.base import InputBase, PaginatedListResponseBase
 from schemas.mixins import BusinessEntitySchemaMetadataMixin
@@ -18,52 +17,52 @@ class TestInputBase(InputBase):
 
 
 class TestCreate(TestInputBase):
-    sample_id: UUID
+    sample_id: UUID = Field(alias="sampleId")
 
-    type_: TestType
+    type_: TestType = Field(alias="type")
 
-    measurement_1: float
+    measurement_1: float = Field(alias="measurement1")
 
 
 class TestUpdate(TestInputBase):
-    measurement_1: float = Field(None)
+    measurement_1: float = Field(None, alias="measurement1")
 
 
 class TestResponseBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: UUID
 
 
 class TestLookupResponse(TestResponseBase):
-    type_: TestType
-    mean_measurement: float
+    type_: TestType = Field(alias="type")
+    mean_measurement: float = Field(alias="meanMeasurement")
     status: TestStatus
 
 
 class TestShortResponse(TestResponseBase):
-    type_: TestType
-    mean_measurement: float
+    type_: TestType = Field(alias="type")
+    mean_measurement: float = Field(alias="meanMeasurement")
     status: TestStatus
 
 
 class TestDetailResponse(TestResponseBase, BusinessEntitySchemaMetadataMixin):
-    type_: TestType
+    type_: TestType = Field(alias="type")
 
     sample: "SampleShortResponse"
 
-    measurement_1: float
-    measurement_2: float
-    measurement_3: float | None
+    measurement_1: float = Field(alias="measurement1")
+    measurement_2: float = Field(alias="measurement2")
+    measurement_3: float | None = Field(alias="measurement3")
 
-    selected_measurement_1: float
-    selected_measurement_2: float
+    selected_measurement_1: float = Field(alias="selected_measurement1")
+    selected_measurement_2: float = Field(alias="selected_measurement2")
 
-    difference_percent: float
-    mean_measurement: float
+    difference_percent: float = Field(alias="differencePercent")
+    mean_measurement: float = Field(alias="meanMeasurement")
 
-    lower_limit: float
-    upper_limit: float
+    lower_limit: float = Field(alias="lowerLimit")
+    upper_limit: float = Field(alias="upperLimit")
 
     status: TestStatus
 
