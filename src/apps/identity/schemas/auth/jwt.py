@@ -1,29 +1,27 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import EmailStr
+
+from schemas.base import SchemaBase
 
 
-class JWTSchemaBase(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-
-class LoginRequest(JWTSchemaBase):
+class LoginRequest(SchemaBase):
     email: EmailStr
     password: str
 
 
-class LogoutRequest(JWTSchemaBase):
-    refresh_token: str = Field(alias="refreshToken")
+class LogoutRequest(SchemaBase):
+    refresh_token: str
 
 
-class TokenRefreshRequest(JWTSchemaBase):
-    refresh_token: str = Field(alias="refreshToken")
+class TokenRefreshRequest(SchemaBase):
+    refresh_token: str
 
 
-class TokenRefreshResponse(JWTSchemaBase):
-    access_token: str = Field(alias="accessToken")
-    token_type: str = Field("bearer", alias="tokenType")
+class TokenRefreshResponse(SchemaBase):
+    access_token: str
+    token_type: str = "bearer"
 
 
-class TokenPairResponse(JWTSchemaBase):
-    access_token: str = Field(alias="accessToken")
-    refresh_token: str | None = Field(None, alias="refreshToken")
-    token_type: str = Field("bearer", alias="tokenType")
+class TokenPairResponse(SchemaBase):
+    access_token: str
+    refresh_token: str | None = None
+    token_type: str = "bearer"

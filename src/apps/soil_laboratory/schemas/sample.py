@@ -2,10 +2,10 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from apps.soil_laboratory.dto.sample import SampleCreateDTO, SampleUpdateDTO
-from schemas.base import InputBase, PaginatedListResponseBase
+from schemas.base import SchemaBase, InputSchemaBase, PaginatedListResponseBase
 from schemas.mixins import BusinessEntitySchemaMetadataMixin
 from validation.common import validate_description
 
@@ -17,7 +17,7 @@ MOLDING_SAND_RECIPE_CONSTRAINTS = {"min_length": 1, "max_length": 50}
 NOTE_CONSTRAINTS = {"min_length": 1, "max_length": 1000}
 
 
-class SampleInputBase(InputBase):
+class SampleInputSchemaBase(InputSchemaBase):
     @field_validator("molding_sand_recipe", mode="after", check_fields=False)
     @classmethod
     def validate_molding_sand_recipe(cls, value: str) -> str:
@@ -32,13 +32,9 @@ class SampleInputBase(InputBase):
         )
 
 
-class SampleCreate(SampleInputBase):
-    molding_sand_recipe: str = Field(
-        ...,
-        **MOLDING_SAND_RECIPE_CONSTRAINTS,
-        alias="moldingSandRecipe"
-    )
-    received_at: datetime = Field(..., alias="receivedAt")
+class SampleCreate(SampleInputSchemaBase):
+    molding_sand_recipe: str = Field(..., **MOLDING_SAND_RECIPE_CONSTRAINTS)
+    received_at: datetime
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
 
@@ -46,13 +42,9 @@ class SampleCreate(SampleInputBase):
         return SampleCreateDTO(**self.model_dump())
 
 
-class SampleUpdate(SampleInputBase):
-    molding_sand_recipe: str = Field(
-        None,
-        **MOLDING_SAND_RECIPE_CONSTRAINTS,
-        alias="moldingSandRecipe"
-    )
-    received_at: datetime = Field(None, alias="receivedAt")
+class SampleUpdate(SampleInputSchemaBase):
+    molding_sand_recipe: str = Field(None, **MOLDING_SAND_RECIPE_CONSTRAINTS)
+    received_at: datetime = Field(None)
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
 
@@ -60,25 +52,25 @@ class SampleUpdate(SampleInputBase):
         return SampleUpdateDTO(**self.model_dump(exclude_unset=True))
 
 
-class SampleResponseBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+class SampleResponseBase(SchemaBase):
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
 
 
 class SampleLookupResponse(SampleResponseBase):
-    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
-    received_at: datetime = Field(alias="receivedAt")
+    molding_sand_recipe: str
+    received_at: datetime
 
 
 class SampleShortResponse(SampleResponseBase):
-    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
-    received_at: datetime = Field(alias="receivedAt")
+    molding_sand_recipe: str
+    received_at: datetime
 
 
 class SampleDetailResponse(SampleResponseBase, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
-    received_at: datetime = Field(alias="receivedAt")
+    molding_sand_recipe: str
+    received_at: datetime
 
     tests: list["TestShortResponse"]
 
@@ -86,8 +78,8 @@ class SampleDetailResponse(SampleResponseBase, BusinessEntitySchemaMetadataMixin
 
 
 class SampleListItemResponse(SampleShortResponse, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str = Field(alias="moldingSandRecipe")
-    received_at: datetime = Field(alias="receivedAt")
+    molding_sand_recipe: str
+    received_at: datetime
 
     tests: list["TestShortResponse"]
 
@@ -96,16 +88,16 @@ class SampleListResponse(PaginatedListResponseBase[SampleListItemResponse]):
     pass
 
 
-class SamplesReportGenerationRequest(BaseModel):
-    date_from: date | None = Field(alias="dateFrom")
-    date_to: date | None = Field(alias="dateTo")
+class SamplesReportGenerationRequest(SchemaBase):
+    date_from: date | None = None
+    date_to: date | None = None
 
 
-class SamplesReportGenerationResponse(BaseModel):
+class SamplesReportGenerationResponse(SchemaBase):
     model_config = ConfigDict(populate_by_name=True)
 
     success: bool
     message: str
-    file_name: str = Field(alias="fileName")
-    total_records: int = Field(alias="totalRecords")
-    generated_at: datetime = Field(alias="generatedAt")
+    file_name: str
+    total_records: int
+    generated_at: datetime

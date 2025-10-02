@@ -1,9 +1,9 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from apps.identity.dto import PermissionCreateDTO, PermissionUpdateDTO
-from schemas.base import InputBase, PaginatedListResponseBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, SchemaBase
 from schemas.mixins import ReferenceEntitySchemaMetadataMixin
 from validation.common import (
     validate_description,
@@ -17,7 +17,7 @@ PERMISSION_NAME_CONSTRAINTS = {"min_length": 2, "max_length": 120}
 PERMISSION_DESCRIPTION_CONSTRAINTS = {"min_length": 5, "max_length": 255}
 
 
-class PermissionInputBase(InputBase):
+class PermissionInputSchemaBase(InputSchemaBase):
     @field_validator("code", mode="after", check_fields=False)
     @classmethod
     def validate_code(cls, value: str) -> str:
@@ -37,7 +37,7 @@ class PermissionInputBase(InputBase):
         )
 
 
-class PermissionCreate(PermissionInputBase):
+class PermissionCreate(PermissionInputSchemaBase):
     code: str = Field(..., **PERMISSION_CODE_CONSTRAINTS)
     name: str = Field(..., **PERMISSION_NAME_CONSTRAINTS)
     description: str | None = Field(None, **PERMISSION_DESCRIPTION_CONSTRAINTS)
@@ -46,7 +46,7 @@ class PermissionCreate(PermissionInputBase):
         return PermissionCreateDTO(**self.model_dump())
 
 
-class PermissionUpdate(PermissionInputBase):
+class PermissionUpdate(PermissionInputSchemaBase):
     code: str = Field(None, **PERMISSION_CODE_CONSTRAINTS)
     name: str = Field(None, **PERMISSION_NAME_CONSTRAINTS)
     description: str | None = Field(None, **PERMISSION_DESCRIPTION_CONSTRAINTS)
@@ -55,7 +55,7 @@ class PermissionUpdate(PermissionInputBase):
         return PermissionUpdateDTO(**self.model_dump(exclude_unset=True))
 
 
-class PermissionResponseBase(BaseModel):
+class PermissionResponseBase(SchemaBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from apps.identity.dto import RoleCreateDTO, RoleUpdateDTO
-from schemas.base import InputBase, PaginatedListResponseBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, SchemaBase
 from schemas.mixins import ReferenceEntitySchemaMetadataMixin
 from validation.common import validate_description, validate_entity_name
 
@@ -17,7 +17,7 @@ ROLE_NAME_CONSTRAINTS = {"min_length": 2, "max_length": 120}
 ROLE_DESCRIPTION_CONSTRAINTS = {"min_length": 5, "max_length": 255}
 
 
-class RoleInputBase(InputBase):
+class RoleInputSchemaBase(InputSchemaBase):
     @field_validator("code", mode="after", check_fields=False)
     @classmethod
     def validate_code(cls, value: str) -> str:
@@ -34,30 +34,30 @@ class RoleInputBase(InputBase):
         return validate_description(value) if value is not None else value
 
 
-class RoleCreate(RoleInputBase):
+class RoleCreate(RoleInputSchemaBase):
     code: str = Field(..., **ROLE_CODE_CONSTRAINTS)
     name: str = Field(..., **ROLE_NAME_CONSTRAINTS)
     description: str | None = Field(None, **ROLE_DESCRIPTION_CONSTRAINTS)
 
-    permission_ids: list[UUID] | None = Field(None, alias="permissionIds")
+    permission_ids: list[UUID] | None = None
 
     def to_dto(self) -> RoleCreateDTO:
         return RoleCreateDTO(**self.model_dump(exclude={"permission_ids", }))
 
 
-class RoleUpdate(RoleInputBase):
+class RoleUpdate(RoleInputSchemaBase):
     code: str = Field(None, **ROLE_CODE_CONSTRAINTS)
     name: str = Field(None, **ROLE_NAME_CONSTRAINTS)
     description: str | None = Field(None, **ROLE_DESCRIPTION_CONSTRAINTS)
 
-    permission_ids: list[UUID] = Field(None, alias="permissionIds")
+    permission_ids: list[UUID] = Field(None)
 
     def to_dto(self) -> RoleUpdateDTO:
         return RoleUpdateDTO(**self.model_dump(exclude={"permission_ids", }, exclude_unset=True))
 
 
-class RoleResponseBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+class RoleResponseBase(SchemaBase):
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
 

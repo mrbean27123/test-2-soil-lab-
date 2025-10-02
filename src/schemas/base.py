@@ -1,35 +1,44 @@
 from typing import Generic, Literal, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
-class InputBase(BaseModel):
+class SchemaBase(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",  # 🚫 Input validation: forbid unexpected fields
-        str_strip_whitespace=True,  # 🧼 String normalization (strip() all strings automatically)
+        # 🐍->🐫 Auto-generate camelCase aliases from snake_case field names
+        alias_generator=to_camel,
 
+        # 🔄 Allow populating models by either alias or the original field name
         populate_by_name=True
     )
 
 
-ModelT = TypeVar("ModelT", bound=InputBase)
+class InputSchemaBase(SchemaBase):
+    model_config = ConfigDict(
+        extra="forbid",  # 🚫 Forbid unexpected fields during input validation
+        str_strip_whitespace=True,  # 🧼 String normalization (strip() all strings automatically)
+    )
 
 
-class AtomicOperationBase(BaseModel):
+InputSchemaModelT = TypeVar("InputSchemaModelT", bound=InputSchemaBase)
+
+
+class AtomicOperationBase(SchemaBase):
     model_config = ConfigDict(extra="forbid")
 
 
-class CreateOperationBase(AtomicOperationBase, Generic[ModelT]):
+class CreateOperationBase(AtomicOperationBase, Generic[InputSchemaModelT]):
     """Represents a single atomic 'create' operation within a batch request to create 'ModelT'."""
     action: Literal["create"]
-    data: ModelT
+    data: InputSchemaModelT
 
 
-class UpdateOperationBase(AtomicOperationBase, Generic[ModelT]):
+class UpdateOperationBase(AtomicOperationBase, Generic[InputSchemaModelT]):
     """Represents a single atomic 'update' operation within a batch request to modify 'ModelT'."""
     action: Literal["update"]
-    data: ModelT
+    data: InputSchemaModelT
     id: UUID
 
 
@@ -39,13 +48,13 @@ class DeleteOperationBase(AtomicOperationBase):
     id: UUID
 
 
-ListItemModelT = TypeVar("ListItemModelT")
+SchemaModelT = TypeVar("SchemaModelT", bound=SchemaBase)
 
 
-class PaginatedListResponseBase(BaseModel, Generic[ListItemModelT]):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+class PaginatedListResponseBase(SchemaBase, Generic[SchemaModelT]):
+    model_config = ConfigDict(from_attributes=True)
 
-    data: list[ListItemModelT]
+    data: list[SchemaModelT]
     page: int
-    total_pages: int = Field(alias="totalPages")
-    total_items: int = Field(alias="totalItems")
+    total_pages: int
+    total_items: int
