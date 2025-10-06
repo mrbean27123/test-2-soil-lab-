@@ -180,22 +180,22 @@ class SampleReportService:
             "№ п/п",
             "№ суміші",
             "Міцність на стискання, кгс/см²",
-            "Газопрникність, од.",
+            "Газопроникність, од.",
             "Вологість, %",
             "Час",
             "Примітка"
         ]
 
-        hdr_cells = table.rows[0].cells
+        header_cells = table.rows[0].cells
         for i, header in enumerate(headers):
-            hdr_cells[i].text = header
+            header_cells[i].text = header
 
-            for paragraph in hdr_cells[i].paragraphs:
+            for paragraph in header_cells[i].paragraphs:
 
                 for run in paragraph.runs:
                     run.bold = True
 
-            hdr_cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            header_cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # Данные
         for idx, sample in enumerate(samples, 1):
