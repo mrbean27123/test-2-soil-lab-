@@ -13,11 +13,13 @@ class MoldingSandRecipes(str, Enum):
     MCMS_1C2C = "1C2C"
 
 
-STRENGTH_CONSTRAINTS: dict[str, tuple[float, float]] = {
+COMPRESSIVE_STRENGTH_CONSTRAINTS: dict[str, tuple[float, float]] = {
     MoldingSandRecipes.MS_13.value: (1.05, 1.2),
     MoldingSandRecipes.MS_14.value: (1.2, 1.3),
     MoldingSandRecipes.MS_15.value: (1.05, 1.2),
+}
 
+TENSILE_STRENGTH_CONSTRAINTS: dict[str, tuple[float, float]] = {
     MoldingSandRecipes.MCMS_8.value: (0.15, 10.0),
     MoldingSandRecipes.MCMS_1C.value: (0.44, 10.0),
     MoldingSandRecipes.MCMS_1XC.value: (0.44, 10.0),

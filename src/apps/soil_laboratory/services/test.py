@@ -6,11 +6,11 @@ from apps.soil_laboratory.dto.test import TestCreateDTO
 from apps.soil_laboratory.enums import TestStatus, TestType
 from apps.soil_laboratory.models import Sample, Test
 from apps.soil_laboratory.molding_sand_config import (
-    GAS_FORMING_PROPERTY_CONSTRAINTS,
+    COMPRESSIVE_STRENGTH_CONSTRAINTS, GAS_FORMING_PROPERTY_CONSTRAINTS,
     GAS_PERMEABILITY_CONSTRAINTS,
     MOISTURE_CONSTRAINTS,
     MoldingSandRecipes,
-    STRENGTH_CONSTRAINTS
+    TENSILE_STRENGTH_CONSTRAINTS
 )
 from apps.soil_laboratory.repositories.sample import SampleLoadOptions, SampleRepository
 from apps.soil_laboratory.repositories.test import TestLoadOptions, TestRepository
@@ -162,13 +162,16 @@ class TestService:
         measurement = test_data.measurement_1
 
         match test_type:
+            case TestType.COMPRESSIVE_STRENGTH:
+                constraints = COMPRESSIVE_STRENGTH_CONSTRAINTS
             case (
-            TestType.STRENGTH
-            | TestType.STRENGTH_AFTER_1_hour
-            | TestType.STRENGTH_AFTER_3_hours
-            | TestType.STRENGTH_AFTER_24_hours
+            TestType.TENSILE_STRENGTH
+            | TestType.TENSILE_STRENGTH_AFTER_0_hours
+            | TestType.TENSILE_STRENGTH_AFTER_1_hour
+            | TestType.TENSILE_STRENGTH_AFTER_3_hours
+            | TestType.TENSILE_STRENGTH_AFTER_24_hours
             ):
-                constraints = STRENGTH_CONSTRAINTS
+                constraints = TENSILE_STRENGTH_CONSTRAINTS
             case TestType.GAS_PERMEABILITY:
                 constraints = GAS_PERMEABILITY_CONSTRAINTS
             case TestType.MOISTURE_PERCENT:
