@@ -31,7 +31,8 @@ def upgrade() -> None:
         "tensile_strength_after_0_hours",
         "tensile_strength_after_1_hour",
         "tensile_strength_after_3_hours",
-        "tensile_strength_after_24_hours"
+        "tensile_strength_after_24_hours",
+        "gas_forming_property"
     ]
 
     for value in new_values:
