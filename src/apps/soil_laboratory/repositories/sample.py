@@ -3,12 +3,13 @@ from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Load, selectinload
 
-from apps.soil_laboratory.models import Sample
+from apps.soil_laboratory.models import Material, Sample, TestResult
 from repositories.base import (
     BaseRepository,
     CountMixin,
     CreateMixin,
     ExistsMixin,
+    HardDeleteMixin,
     LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
@@ -18,7 +19,11 @@ from repositories.base import (
 
 
 class SampleLoadOptions(str, Enum):
-    TESTS = "tests"
+    MATERIAL = "material"
+    MATERIAL__MATERIAL_TYPE = "material__material_type"
+    MATERIAL_SOURCE = "material_source"
+    TEST_RESULTS = "test_results"
+    TEST_RESULTS__PARAMETER = "test_results__parameter"
 
 
 class SampleRepository(
@@ -30,10 +35,19 @@ class SampleRepository(
     ReadByIdMixin[Sample, SampleLoadOptions],
     CreateMixin[Sample],
     UpdateMixin[Sample],
-    SoftDeleteMixin[Sample]
+    SoftDeleteMixin[Sample],
+    HardDeleteMixin[Sample]
 ):
     _LOAD_OPTIONS_MAP: dict[SampleLoadOptions, Load] = {
-        SampleLoadOptions.TESTS: selectinload(Sample.tests),
+        SampleLoadOptions.MATERIAL: selectinload(Sample.material),
+        SampleLoadOptions.MATERIAL__MATERIAL_TYPE: (
+            selectinload(Sample.material).selectinload(Material.material_type)
+        ),
+        SampleLoadOptions.MATERIAL_SOURCE: selectinload(Sample.material_source),
+        SampleLoadOptions.TEST_RESULTS: selectinload(Sample.test_results),
+        SampleLoadOptions.TEST_RESULTS__PARAMETER: (
+            selectinload(Sample.test_results).selectinload(TestResult.parameter)
+        ),
     }
 
     def __init__(self, db: AsyncSession):

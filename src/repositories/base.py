@@ -171,11 +171,15 @@ class LookupMixin(Generic[ModelT]):
     async def get_for_lookup(
         self: IsBaseRepository[ModelT],
         pagination: PaginationCriteria,
+        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
         search: SearchCriteria | None = None,
         order: OrderCriteria | None = None,
         include: list[LoadOptionsT] | None = None
     ) -> list[ModelT]:
         stmt = select(self.model)
+
+        if where_conditions:
+            stmt = stmt.where(and_(*where_conditions))
 
         # TODO: move it inside SearchCriteria -> stmt = SearchCriteria.apply(stmt)
         if search and search.is_applicable:

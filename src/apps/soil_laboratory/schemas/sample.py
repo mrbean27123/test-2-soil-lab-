@@ -2,38 +2,33 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from apps.soil_laboratory.dto.sample import SampleCreateDTO, SampleUpdateDTO
-from schemas.base import SchemaBase, InputSchemaBase, PaginatedListResponseBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, ResponseSchemaBase, SchemaBase
 from schemas.mixins import BusinessEntitySchemaMetadataMixin
-from validation.common import validate_description
 
 
 if TYPE_CHECKING:
-    from apps.soil_laboratory.schemas.test import TestShortResponse
+    from apps.soil_laboratory.schemas.material import MaterialShortResponse
+    from apps.soil_laboratory.schemas.material_source import MaterialSourceShortResponse
+    from apps.soil_laboratory.schemas.test_result import TestResultShortResponse
 
-MOLDING_SAND_RECIPE_CONSTRAINTS = {"min_length": 1, "max_length": 50}
 NOTE_CONSTRAINTS = {"min_length": 1, "max_length": 1000}
 
 
 class SampleInputSchemaBase(InputSchemaBase):
-    @field_validator("molding_sand_recipe", mode="after", check_fields=False)
-    @classmethod
-    def validate_molding_sand_recipe(cls, value: str) -> str:
-        return value
-
     @field_validator("note", mode="after", check_fields=False)
     @classmethod
     def validate_note(cls, value: str | None) -> str | None:
-        return (
-            validate_description(value, only_ukrainian_letters=False)
-            if value is not None else value
-        )
+        return value
 
 
 class SampleCreate(SampleInputSchemaBase):
-    molding_sand_recipe: str = Field(..., **MOLDING_SAND_RECIPE_CONSTRAINTS)
+    material_id: UUID
+    material_source_id: UUID
+
+    temperature: float
     received_at: datetime
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
@@ -43,7 +38,6 @@ class SampleCreate(SampleInputSchemaBase):
 
 
 class SampleUpdate(SampleInputSchemaBase):
-    molding_sand_recipe: str = Field(None, **MOLDING_SAND_RECIPE_CONSTRAINTS)
     received_at: datetime = Field(None)
 
     note: str | None = Field(None, **NOTE_CONSTRAINTS)
@@ -52,39 +46,46 @@ class SampleUpdate(SampleInputSchemaBase):
         return SampleUpdateDTO(**self.model_dump(exclude_unset=True))
 
 
-class SampleResponseBase(SchemaBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+SampleResponseBase = ResponseSchemaBase[UUID]
 
 
 class SampleLookupResponse(SampleResponseBase):
-    molding_sand_recipe: str
+    material: "MaterialShortResponse"
+    material_source: "MaterialSourceShortResponse"
+
     received_at: datetime
 
 
 class SampleShortResponse(SampleResponseBase):
-    molding_sand_recipe: str
+    material: "MaterialShortResponse"
+    material_source: "MaterialSourceShortResponse"
+
     received_at: datetime
 
 
 class SampleDetailResponse(SampleResponseBase, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str
+    material: "MaterialShortResponse"
+    material_source: "MaterialSourceShortResponse"
+
+    temperature: float
     received_at: datetime
 
-    tests: list["TestShortResponse"]
+    test_results: list["TestResultShortResponse"]
 
     note: str | None
 
 
 class SampleListItemResponse(SampleShortResponse, BusinessEntitySchemaMetadataMixin):
-    molding_sand_recipe: str
+    material: "MaterialShortResponse"
+    material_source: "MaterialSourceShortResponse"
+
+    temperature: float
     received_at: datetime
 
-    tests: list["TestShortResponse"]
+    test_results: list["TestResultShortResponse"]
 
 
-class SampleListResponse(PaginatedListResponseBase[SampleListItemResponse]):
+class SamplePaginatedListResponse(PaginatedListResponseBase[SampleListItemResponse]):
     pass
 
 
@@ -94,8 +95,6 @@ class SamplesReportGenerationRequest(SchemaBase):
 
 
 class SamplesReportGenerationResponse(SchemaBase):
-    model_config = ConfigDict(populate_by_name=True)
-
     success: bool
     message: str
     file_name: str

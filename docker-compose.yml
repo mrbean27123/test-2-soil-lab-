@@ -1,8 +1,7 @@
-# docker-compose.yml — ТОЧНО та же структура, но имена через COMPOSE_PROJECT_NAME
 services:
   db:
     image: postgres:17
-    container_name: "${COMPOSE_PROJECT_NAME}_postgres" # было: soil-laboratory-app-postgres
+    container_name: soil-laboratory-app-postgres
     restart: unless-stopped
     ports:
       - "${POSTGRES_EXTERNAL_PORT:-5432}:${POSTGRES_PORT:-5432}"
@@ -13,11 +12,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost || exit 1",
-        ]
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,12 +22,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: "${COMPOSE_PROJECT_NAME}_app" # было: soil-laboratory-app
+    container_name: soil-laboratory-app
     restart: unless-stopped
     ports:
       - "${APP_EXTERNAL_PORT:-8000}:${APP_PORT:-8000}"
     volumes:
+      # For development - mount the code for hot reload
       - ./src:/usr/src/app/src
+      # For logs (optional)
+      # - ./logs:/usr/src/app/logs
     working_dir: /usr/src/app
     networks:
       - soil-laboratory-app-network
@@ -44,9 +42,9 @@ services:
 
 volumes:
   soil-laboratory-app-postgres-data:
-    name: "${COMPOSE_PROJECT_NAME}_soil-laboratory-app-postgres-data" # было: soil-laboratory-app-postgres-data
+    name: soil-laboratory-app-postgres-data
 
 networks:
   soil-laboratory-app-network:
     driver: bridge
-    name: "${COMPOSE_PROJECT_NAME}_soil-laboratory-app-network" # было: soil-laboratory-app-network
+    name: soil-laboratory-app-network

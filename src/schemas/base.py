@@ -6,6 +6,7 @@ from pydantic.alias_generators import to_camel
 
 
 class SchemaBase(BaseModel):
+    """Base class for all Pydantic schemas in the project."""
     model_config = ConfigDict(
         # 🐍->🐫 Auto-generate camelCase aliases from snake_case field names
         alias_generator=to_camel,
@@ -16,10 +17,23 @@ class SchemaBase(BaseModel):
 
 
 class InputSchemaBase(SchemaBase):
+    """Base class for schemas used for input data validation (e.g., in request bodies)."""
     model_config = ConfigDict(
         extra="forbid",  # 🚫 Forbid unexpected fields during input validation
         str_strip_whitespace=True,  # 🧼 String normalization (strip() all strings automatically)
     )
+
+
+IdentifierT = TypeVar("IdentifierT")
+
+
+class ResponseSchemaBase(SchemaBase, Generic[IdentifierT]):
+    """Base class for schemas used for output data serialization (e.g., in response bodies)."""
+    model_config = ConfigDict(
+        from_attributes=True,  # 🔄 Enable creating schemas directly from ORM model instances
+    )
+
+    id: IdentifierT
 
 
 InputSchemaModelT = TypeVar("InputSchemaModelT", bound=InputSchemaBase)
