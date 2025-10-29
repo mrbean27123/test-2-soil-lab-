@@ -15,9 +15,6 @@ from core.middleware import (
 from core.security.dependencies import get_jwt_manager
 from schemas.utils import resolve_schemas_forward_refs
 
-# Register ORM Models
-import database.models.all_models  # noqa: F401
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,5 +52,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(identity_app_router, prefix="/api")
-app.include_router(soil_laboratory_app_router, prefix="/api")
+app.include_router(identity_app_router)
+app.include_router(soil_laboratory_app_router)

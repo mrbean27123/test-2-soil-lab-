@@ -6,10 +6,13 @@ from apps.soil_laboratory.models import Material
 from apps.soil_laboratory.repositories.material import MaterialLoadOptions, MaterialRepository
 from apps.soil_laboratory.schemas.material import (
     MaterialDetailResponse,
-    MaterialListItemResponse, MaterialPaginatedListResponse
+    MaterialListItemResponse,
+    MaterialPaginatedListResponse
 )
+from apps.soil_laboratory.specifications.filter.material import MaterialFilterSpecification
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria
+from specifications.ordering import OrderingSpecification
+from specifications.pagination import PaginationSpecification
 
 
 class MaterialService:
@@ -27,6 +30,40 @@ class MaterialService:
             raise EntityNotFoundError(Material, material_id)
 
         return MaterialDetailResponse.model_validate(material)
+
+    async def get_materials_paginated(
+        self,
+        page: int,
+        per_page: int,
+        ordering: str | None = None,
+        material_type_code__eq: str | None = None
+    ) -> MaterialPaginatedListResponse:
+        conditions = [Material.archived_at == None, ]
+
+        total_materials = await self.material_repo.get_count(where_conditions=conditions)
+        total_pages = max((total_materials + per_page - 1) // per_page, 1)
+
+        material_entities = await self.material_repo.get_all_paginated_n(
+            PaginationSpecification(page, per_page),
+            OrderingSpecification(
+                Material,
+                ordering=ordering,
+                default_ordering=[Material.name.asc()]
+            ),
+            MaterialFilterSpecification(material_type_code__eq=material_type_code__eq),
+            include=[MaterialLoadOptions.MATERIAL_TYPE, ]
+        )
+        response_items = [
+            MaterialListItemResponse.model_validate(material)
+            for material in material_entities
+        ]
+
+        return MaterialPaginatedListResponse(
+            data=response_items,
+            page=page,
+            total_pages=total_pages,
+            total_items=total_materials
+        )
 
     # async def get_material_lookup_options(
     #     self,
@@ -47,31 +84,31 @@ class MaterialService:
     #
     #     return response_items
 
-    async def get_materials_paginated(
-        self,
-        page: int,
-        per_page: int
-    ) -> MaterialPaginatedListResponse:
-        conditions = [Material.archived_at == None, ]
-
-        total_materials = await self.material_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_materials + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
-
-        material_entities = await self.material_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=conditions,
-            order=OrderCriteria(Material.name),
-            include=[MaterialLoadOptions.MATERIAL_TYPE, ]
-        )
-        response_items = [
-            MaterialListItemResponse.model_validate(material)
-            for material in material_entities
-        ]
-
-        return MaterialPaginatedListResponse(
-            data=response_items,
-            page=page,
-            total_pages=total_pages,
-            total_items=total_materials
-        )
+    # async def get_materials_paginated(
+    #     self,
+    #     page: int,
+    #     per_page: int
+    # ) -> MaterialPaginatedListResponse:
+    #     conditions = [Material.archived_at == None, ]
+    #
+    #     total_materials = await self.material_repo.get_count(where_conditions=conditions)
+    #     total_pages = max((total_materials + per_page - 1) // per_page, 1)
+    #     offset = (page - 1) * per_page
+    #
+    #     material_entities = await self.material_repo.get_all_paginated(
+    #         PaginationCriteria(per_page, offset),
+    #         where_conditions=conditions,
+    #         order=OrderCriteria(Material.name),
+    #         include=[MaterialLoadOptions.MATERIAL_TYPE, ]
+    #     )
+    #     response_items = [
+    #         MaterialListItemResponse.model_validate(material)
+    #         for material in material_entities
+    #     ]
+    #
+    #     return MaterialPaginatedListResponse(
+    #         data=response_items,
+    #         page=page,
+    #         total_pages=total_pages,
+    #         total_items=total_materials
+    #     )

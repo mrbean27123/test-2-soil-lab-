@@ -6,7 +6,7 @@ from apps.identity.api.roles import router as roles_router
 from apps.identity.api.users import router as users_router
 
 
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="/api/v1")
 
 router.include_router(auth_router)
 router.include_router(permissions_router)

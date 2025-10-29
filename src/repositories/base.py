@@ -12,6 +12,10 @@ from core import context
 from core.config import settings
 from database.models import BaseORM
 from dto import CreateDTOBase, UpdateDTOBase
+from interfaces.specifications import (
+    FilterSpecificationInterface, OrderingSpecificationInterface,
+    PaginationSpecificationInterface
+)
 
 
 ModelT = TypeVar("ModelT", bound=BaseORM)
@@ -212,6 +216,33 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
 
     Should be combined with a CRUD base class providing `self.model` and `self.db`.
     """
+
+    async def get_all_paginated_n(
+        self: IsBaseRepository[ModelT],
+        pagination_spec: PaginationSpecificationInterface,
+        ordering_spec: OrderingSpecificationInterface | None = None,
+        filter_spec: FilterSpecificationInterface | None = None,
+        # search_spec: SearchSpecificationInterface | None = None,
+        include: list[LoadOptionsT] | None = None
+    ) -> list[ModelT]:
+        stmt = select(self.model)
+
+        if filter_spec:
+            stmt = filter_spec.apply(stmt)
+
+        # if search_spec:
+        #     stmt = search_spec.apply(stmt)
+
+        if ordering_spec:
+            stmt = ordering_spec.apply(stmt)
+
+        stmt = pagination_spec.apply(stmt)
+
+        stmt = self._apply_load_options(stmt, include)
+
+        result = await self.db.execute(stmt)
+
+        return list(result.scalars().all())
 
     async def get_all_paginated(
         self: IsBaseRepository[ModelT],

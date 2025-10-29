@@ -8,7 +8,7 @@ from apps.soil_laboratory.api.samples import router as samples_router
 from apps.soil_laboratory.api.test_results import router as tests_router
 
 
-router = APIRouter(prefix="/v1")
+router = APIRouter(prefix="/api/v1")
 
 router.include_router(material_sources_router)
 router.include_router(material_types_router)
