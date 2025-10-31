@@ -6,11 +6,9 @@ from sqlalchemy.orm import Load, selectinload
 from apps.soil_laboratory.models import Material, Sample, TestResult
 from repositories.base import (
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
     HardDeleteMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     SoftDeleteMixin,
@@ -29,8 +27,6 @@ class SampleLoadOptions(str, Enum):
 class SampleRepository(
     BaseRepository[Sample, SampleLoadOptions],
     ExistsMixin[Sample],
-    CountMixin[Sample],
-    LookupMixin[Sample],
     ReadPaginatedMixin[Sample, SampleLoadOptions],
     ReadByIdMixin[Sample, SampleLoadOptions],
     CreateMixin[Sample],

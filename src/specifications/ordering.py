@@ -45,6 +45,11 @@ class OrderingSpecification(OrderingSpecificationInterface):
         self._ordering_clauses = self._build_ordering_clauses_from_str(ordering)
 
     @property
+    def join_paths(self) -> list[Type]:
+        """Get list of join paths."""
+        return []
+
+    @property
     def ordering_fields(self) -> list[str]:
         """
         Returns the active ordering clauses (fields) as string representations.

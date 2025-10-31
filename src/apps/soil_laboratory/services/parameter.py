@@ -9,8 +9,10 @@ from apps.soil_laboratory.schemas.parameter import (
     ParameterListItemResponse,
     ParameterPaginatedListResponse
 )
+from apps.soil_laboratory.specifications import ParameterSearchSpecification
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria
+from specifications.ordering import OrderingSpecification
+from specifications.pagination import PaginationSpecification
 
 
 class ParameterService:
@@ -28,28 +30,33 @@ class ParameterService:
 
     async def get_parameters_paginated(
         self,
-        page: int,
-        per_page: int
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
     ) -> ParameterPaginatedListResponse:
-        conditions = [Parameter.archived_at == None, ]
+        search_spec = ParameterSearchSpecification(q)
 
-        total_materials = await self.parameter_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_materials + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_parameters = await self.parameter_repo.get_count_n(search_spec=search_spec)
+        total_pages = max((total_parameters + page_size - 1) // page_size, 1)
 
-        material_entities = await self.parameter_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=conditions,
-            order=OrderCriteria(Parameter.name)
+        parameter_entities = await self.parameter_repo.get_all_paginated_n(
+            PaginationSpecification(page_number, page_size),
+            OrderingSpecification(
+                Parameter,
+                default_ordering=[Parameter.name.asc(), ],
+                ordering=ordering
+            ),
+            search_spec=search_spec
         )
         response_items = [
-            ParameterListItemResponse.model_validate(material)
-            for material in material_entities
+            ParameterListItemResponse.model_validate(parameter)
+            for parameter in parameter_entities
         ]
 
         return ParameterPaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
-            total_items=total_materials
+            total_items=total_parameters
         )

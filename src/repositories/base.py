@@ -14,7 +14,7 @@ from database.models import BaseORM
 from dto import CreateDTOBase, UpdateDTOBase
 from interfaces.specifications import (
     FilterSpecificationInterface, OrderingSpecificationInterface,
-    PaginationSpecificationInterface
+    PaginationSpecificationInterface, SearchSpecificationInterface
 )
 
 
@@ -161,9 +161,33 @@ class ExistsMixin(Generic[ModelT]):
 
 
 class CountMixin(Generic[ModelT]):
+    async def get_count_n(
+        self: IsBaseRepository[ModelT],
+        filter_spec: FilterSpecificationInterface | None = None,
+        search_spec: SearchSpecificationInterface | None = None
+    ) -> int:
+        stmt = select(func.count(self.model.id))
+        join_paths = set()
+
+        if filter_spec:
+            join_paths.update(filter_spec.join_paths)
+            stmt = filter_spec.apply(stmt)
+
+        if search_spec:
+            join_paths.update(search_spec.join_paths)
+            stmt = search_spec.apply(stmt)
+
+        # Perform JOINs. Required to search by nested objects' fields
+        # for path in join_paths:
+        #     stmt = stmt.join(path)
+
+        result = await self.db.execute(stmt)
+
+        return result.scalar_one()
+
     async def get_count(
         self: IsBaseRepository[ModelT],
-        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None
+        where_conditions: list[BinaryExpression] | None = None
     ) -> int:
         stmt = select(func.count(self.model.id)).where(and_(*where_conditions))
         result = await self.db.execute(stmt)
@@ -217,32 +241,91 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
     Should be combined with a CRUD base class providing `self.model` and `self.db`.
     """
 
+    async def get_count_n(
+        self: IsBaseRepository[ModelT],
+        filter_spec: FilterSpecificationInterface | None = None,
+        search_spec: SearchSpecificationInterface | None = None
+    ) -> int:
+        stmt = select(func.count(self.model.id))
+        join_paths = []
+
+        if filter_spec:
+            join_paths.extend(filter_spec.join_paths)
+            stmt = filter_spec.apply(stmt)
+
+        if search_spec:
+            join_paths.extend(search_spec.join_paths)
+            stmt = search_spec.apply(stmt)
+
+        # Perform JOINs. Required to search by nested objects' fields
+        unique_join_paths = list(dict.fromkeys(join_paths))
+        for path in unique_join_paths:
+            stmt = stmt.join(path)
+
+        result = await self.db.execute(stmt)
+
+        return result.scalar_one()
+
     async def get_all_paginated_n(
         self: IsBaseRepository[ModelT],
         pagination_spec: PaginationSpecificationInterface,
         ordering_spec: OrderingSpecificationInterface | None = None,
         filter_spec: FilterSpecificationInterface | None = None,
-        # search_spec: SearchSpecificationInterface | None = None,
+        search_spec: SearchSpecificationInterface | None = None,
         include: list[LoadOptionsT] | None = None
     ) -> list[ModelT]:
         stmt = select(self.model)
+        join_paths = []
 
         if filter_spec:
+            join_paths.extend(filter_spec.join_paths)
             stmt = filter_spec.apply(stmt)
 
-        # if search_spec:
-        #     stmt = search_spec.apply(stmt)
+        if search_spec:
+            join_paths.extend(search_spec.join_paths)
+            stmt = search_spec.apply(stmt)
 
         if ordering_spec:
+            join_paths.extend(ordering_spec.join_paths)
             stmt = ordering_spec.apply(stmt)
 
         stmt = pagination_spec.apply(stmt)
+
+        # Perform JOINs. Required to search by nested objects' fields
+        unique_join_paths = list(dict.fromkeys(join_paths))
+        for path in unique_join_paths:
+            stmt = stmt.join(path)
 
         stmt = self._apply_load_options(stmt, include)
 
         result = await self.db.execute(stmt)
 
         return list(result.scalars().all())
+
+    # @staticmethod
+    # def _perform_joins(stmt: Select, join_paths: list[type]) -> Select:
+    #     """
+    #     Performs SQL JOINs in a deterministic order without duplicates.
+    #
+    #     Args:
+    #         stmt: The base SQLAlchemy Select statement.
+    #         join_paths: A list of relationship paths to join. Must be provided in the
+    #         correct order (from outermost to innermost).
+    #
+    #     Returns:
+    #         The updated Select statement with all joins applied.
+    #     """
+    #     # Remove duplicates while preserving insertion order.
+    #     # This avoids redundant JOINs and prevents SQLAlchemy from generating ambiguous or invalid
+    #     # SQL when the same relationship is joined twice.
+    #     unique_join_paths = list(dict.fromkeys(join_paths))
+    #
+    #     # Apply joins sequentially.
+    #     # IMPORTANT: Order matters — each join must follow an already joined entity.
+    #     for path in unique_join_paths:
+    #         stmt = stmt.join(path)
+    #
+    #     return stmt
 
     async def get_all_paginated(
         self: IsBaseRepository[ModelT],

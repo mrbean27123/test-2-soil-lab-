@@ -9,7 +9,10 @@ from apps.soil_laboratory.schemas.material import (
     MaterialListItemResponse,
     MaterialPaginatedListResponse
 )
-from apps.soil_laboratory.specifications.filter.material import MaterialFilterSpecification
+from apps.soil_laboratory.specifications import (
+    MaterialFilterSpecification,
+    MaterialSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError
 from specifications.ordering import OrderingSpecification
 from specifications.pagination import PaginationSpecification
@@ -33,24 +36,27 @@ class MaterialService:
 
     async def get_materials_paginated(
         self,
-        page: int,
-        per_page: int,
+        page_number: int,
+        page_size: int,
         ordering: str | None = None,
+        q: str | None = None,
         material_type_code__eq: str | None = None
     ) -> MaterialPaginatedListResponse:
-        conditions = [Material.archived_at == None, ]
+        filter_spec = MaterialFilterSpecification(material_type_code__eq=material_type_code__eq)
+        search_spec = MaterialSearchSpecification(q)
 
-        total_materials = await self.material_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_materials + per_page - 1) // per_page, 1)
+        total_materials = await self.material_repo.get_count_n(filter_spec, search_spec)
+        total_pages = max((total_materials + page_size - 1) // page_size, 1)
 
         material_entities = await self.material_repo.get_all_paginated_n(
-            PaginationSpecification(page, per_page),
+            PaginationSpecification(page_number, page_size),
             OrderingSpecification(
                 Material,
-                ordering=ordering,
-                default_ordering=[Material.name.asc()]
+                default_ordering=[Material.name.asc(), ],
+                ordering=ordering
             ),
-            MaterialFilterSpecification(material_type_code__eq=material_type_code__eq),
+            filter_spec,
+            search_spec,
             include=[MaterialLoadOptions.MATERIAL_TYPE, ]
         )
         response_items = [
@@ -60,7 +66,7 @@ class MaterialService:
 
         return MaterialPaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
             total_items=total_materials
         )

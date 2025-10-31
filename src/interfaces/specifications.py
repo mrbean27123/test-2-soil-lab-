@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Type
 
 from sqlalchemy import Select
 
@@ -32,6 +32,12 @@ class OrderingSpecificationInterface(SpecificationInterface):
 
     @property
     @abstractmethod
+    def join_paths(self) -> list[Type]:
+        """Get list of join paths."""
+        ...
+
+    @property
+    @abstractmethod
     def ordering_fields(self) -> list[str]:
         """Get list of ordering fields."""
         ...
@@ -42,6 +48,33 @@ class FilterSpecificationInterface(SpecificationInterface):
 
     @property
     @abstractmethod
-    def is_applicable(self) -> bool:
+    def join_paths(self) -> list[Type]:
+        """Get list of join paths."""
+        ...
+
+    @property
+    @abstractmethod
+    def is_empty(self) -> bool:
         """Check if filter specification has any filters."""
+        ...
+
+
+class SearchSpecificationInterface(SpecificationInterface):
+    """Interface for query search specifications."""
+
+    @property
+    @abstractmethod
+    def join_paths(self) -> list[Type]:
+        """Get list of join paths."""
+        ...
+
+    @property
+    @abstractmethod
+    def query(self) -> str | None:
+        """Returns the search query."""
+        ...
+
+    @abstractmethod
+    def is_empty(self) -> bool:
+        """Check if the search specification is empty."""
         ...

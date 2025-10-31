@@ -9,8 +9,10 @@ from apps.soil_laboratory.schemas.material_type import (
     MaterialTypeListItemResponse,
     MaterialTypePaginatedListResponse
 )
+from apps.soil_laboratory.specifications import MaterialTypeSearchSpecification
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria
+from specifications.ordering import OrderingSpecification
+from specifications.pagination import PaginationSpecification
 
 
 class MaterialTypeService:
@@ -28,28 +30,33 @@ class MaterialTypeService:
 
     async def get_material_types_paginated(
         self,
-        page: int,
-        per_page: int
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
     ) -> MaterialTypePaginatedListResponse:
-        conditions = [MaterialType.archived_at == None, ]
+        search_spec = MaterialTypeSearchSpecification(q)
 
-        total_materials = await self.material_type_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_materials + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_material_types = await self.material_type_repo.get_count_n(search_spec=search_spec)
+        total_pages = max((total_material_types + page_size - 1) // page_size, 1)
 
-        material_entities = await self.material_type_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=conditions,
-            order=OrderCriteria(MaterialType.name)
+        material_type_entities = await self.material_type_repo.get_all_paginated_n(
+            PaginationSpecification(page_number, page_size),
+            OrderingSpecification(
+                MaterialType,
+                default_ordering=[MaterialType.name.asc(), ],
+                ordering=ordering
+            ),
+            search_spec=search_spec
         )
         response_items = [
-            MaterialTypeListItemResponse.model_validate(material)
-            for material in material_entities
+            MaterialTypeListItemResponse.model_validate(material_type)
+            for material_type in material_type_entities
         ]
 
         return MaterialTypePaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
-            total_items=total_materials
+            total_items=total_material_types
         )

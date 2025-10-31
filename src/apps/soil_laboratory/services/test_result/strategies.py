@@ -17,8 +17,12 @@ TEMPERATURE_DEPENDANT_MATERIAL_SPECIFICATIONS = {
         {">=18": (2.60, 3.10), "<18": (2.50, 3.00)}
     ),
 
-    ("moisture", "molding_sand", "№8", "workplace"): {">=18": (4.70, 6.00), "<18": (4.70, 5.00)},
-    ("moisture", "molding_sand", "№8", "sand_mixer"): {">=18": (4.70, 6.00), "<18": (4.70, 5.00)},
+    ("moisture", "mold_core_molding_sand_co2_process", "№8", "workplace"): (
+        {">=18": (4.70, 6.00), "<18": (4.70, 5.00)}
+    ),
+    ("moisture", "mold_core_molding_sand_co2_process", "№8", "sand_mixer"): (
+        {">=18": (4.70, 6.00), "<18": (4.70, 5.00)}
+    ),
 
     ("temperature", "molding_sand_material", "пісок формувальний", "storage_hopper"): (
         {">=18": (20.00, 40.00), "<18": (10.00, 40.00)}

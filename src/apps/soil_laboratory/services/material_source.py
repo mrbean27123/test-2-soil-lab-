@@ -3,16 +3,16 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.soil_laboratory.models import MaterialSource
-from apps.soil_laboratory.repositories.material_source import (
-    MaterialSourceRepository
-)
+from apps.soil_laboratory.repositories.material_source import MaterialSourceRepository
 from apps.soil_laboratory.schemas.material_source import (
     MaterialSourceDetailResponse,
     MaterialSourceListItemResponse,
     MaterialSourcePaginatedListResponse
 )
+from apps.soil_laboratory.specifications import MaterialSourceSearchSpecification
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria
+from specifications.ordering import OrderingSpecification
+from specifications.pagination import PaginationSpecification
 
 
 class MaterialSourceService:
@@ -33,28 +33,35 @@ class MaterialSourceService:
 
     async def get_material_sources_paginated(
         self,
-        page: int,
-        per_page: int
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
     ) -> MaterialSourcePaginatedListResponse:
-        conditions = [MaterialSource.archived_at == None, ]
+        search_spec = MaterialSourceSearchSpecification(q)
 
-        total_materials = await self.material_source_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_materials + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_material_sources = await self.material_source_repo.get_count_n(
+            search_spec=search_spec
+        )
+        total_pages = max((total_material_sources + page_size - 1) // page_size, 1)
 
-        material_entities = await self.material_source_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=conditions,
-            order=OrderCriteria(MaterialSource.name)
+        material_source_entities = await self.material_source_repo.get_all_paginated_n(
+            PaginationSpecification(page_number, page_size),
+            OrderingSpecification(
+                MaterialSource,
+                default_ordering=[MaterialSource.name.asc(), ],
+                ordering=ordering
+            ),
+            search_spec=search_spec
         )
         response_items = [
-            MaterialSourceListItemResponse.model_validate(material)
-            for material in material_entities
+            MaterialSourceListItemResponse.model_validate(material_source)
+            for material_source in material_source_entities
         ]
 
         return MaterialSourcePaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
-            total_items=total_materials
+            total_items=total_material_sources
         )

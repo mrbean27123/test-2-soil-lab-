@@ -6,15 +6,15 @@ from interfaces.specifications import PaginationSpecificationInterface
 
 
 class PaginationSpecification(PaginationSpecificationInterface):
-    def __init__(self, page: int, per_page: int):
-        if per_page < 0:
-            raise ValueError("PaginationSpecification 'per_page' cannot be negative")
+    def __init__(self, page_number: int, page_size: int):
+        if page_size < 0:
+            raise ValueError("PaginationSpecification page size cannot be negative")
 
-        if page <= 0:
-            raise ValueError("PaginationSpecification 'page' must be positive")
+        if page_number <= 0:
+            raise ValueError("PaginationSpecification page number must be positive")
 
-        self._limit = per_page
-        self._offset = (page - 1) * per_page
+        self._limit = page_size
+        self._offset = (page_number - 1) * page_size
 
     @property
     def offset(self) -> int:
