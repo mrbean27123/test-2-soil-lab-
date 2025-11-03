@@ -1,45 +1,52 @@
 from abc import ABC, abstractmethod
-from typing import Any, Type
 
 from sqlalchemy import Select
 
 
 class SpecificationInterface(ABC):
-    """Base interface for specifications."""
+    """Interface for a specification that can be applied to a SQLAlchemy query."""
 
     @abstractmethod
-    def apply(self, stmt: Select[Any]) -> Select[Any]:
-        """Modify and return a new SQLAlchemy Select statement."""
+    def apply(self, stmt: Select) -> Select:
+        """Applies the specification to a SQLAlchemy Select statement."""
         ...
 
 
 class PaginationSpecificationInterface(SpecificationInterface):
-    """Interface for pagination specifications."""
+    """Interface for a pagination specification that can be applied to a query."""
 
     @property
     @abstractmethod
     def limit(self) -> int:
+        """Returns the calculated limit (page size)."""
         ...
 
     @property
     @abstractmethod
     def offset(self) -> int:
+        """Returns the calculated offset (rows to skip)."""
         ...
 
 
 class OrderingSpecificationInterface(SpecificationInterface):
-    """Interface for query specification that applies ordering."""
+    """Interface for an ordering specification that can be applied to a query."""
 
     @property
     @abstractmethod
-    def join_paths(self) -> list[Type]:
-        """Get list of join paths."""
+    def join_paths(self) -> tuple[type, ...]:
+        """Returns ORM models required for joins."""
         ...
 
     @property
     @abstractmethod
-    def ordering_fields(self) -> list[str]:
+    def allowed_fields(self) -> list[str]:
         """Get list of ordering fields."""
+        ...
+
+    @property
+    @abstractmethod
+    def is_applicable(self) -> bool:
+        """Check if ordering specification can be applied."""
         ...
 
 
@@ -48,7 +55,7 @@ class FilterSpecificationInterface(SpecificationInterface):
 
     @property
     @abstractmethod
-    def join_paths(self) -> list[Type]:
+    def join_paths(self) -> tuple[type, ...]:
         """Get list of join paths."""
         ...
 
@@ -60,20 +67,21 @@ class FilterSpecificationInterface(SpecificationInterface):
 
 
 class SearchSpecificationInterface(SpecificationInterface):
-    """Interface for query search specifications."""
+    """Interface for a search specification that can be applied to a query."""
 
     @property
     @abstractmethod
-    def join_paths(self) -> list[Type]:
-        """Get list of join paths."""
+    def join_paths(self) -> tuple[type, ...]:
+        """Returns ORM models required for joins."""
         ...
 
     @property
     @abstractmethod
     def query(self) -> str | None:
-        """Returns the search query."""
+        """Returns the search query string."""
         ...
 
+    @property
     @abstractmethod
     def is_empty(self) -> bool:
         """Check if the search specification is empty."""

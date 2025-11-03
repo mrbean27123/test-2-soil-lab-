@@ -13,8 +13,10 @@ from core.config import settings
 from database.models import BaseORM
 from dto import CreateDTOBase, UpdateDTOBase
 from interfaces.specifications import (
-    FilterSpecificationInterface, OrderingSpecificationInterface,
-    PaginationSpecificationInterface, SearchSpecificationInterface
+    FilterSpecificationInterface,
+    OrderingSpecificationInterface,
+    PaginationSpecificationInterface,
+    SearchSpecificationInterface
 )
 
 
@@ -249,12 +251,12 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
         stmt = select(func.count(self.model.id))
         join_paths = []
 
-        if filter_spec:
-            join_paths.extend(filter_spec.join_paths)
+        if filter_spec and not filter_spec.is_empty:
+            join_paths.extend(filter_spec.join_paths or [])
             stmt = filter_spec.apply(stmt)
 
-        if search_spec:
-            join_paths.extend(search_spec.join_paths)
+        if search_spec and not search_spec.is_empty:
+            join_paths.extend(search_spec.join_paths or [])
             stmt = search_spec.apply(stmt)
 
         # Perform JOINs. Required to search by nested objects' fields
@@ -277,16 +279,16 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
         stmt = select(self.model)
         join_paths = []
 
-        if filter_spec:
-            join_paths.extend(filter_spec.join_paths)
+        if filter_spec and not filter_spec.is_empty:
+            join_paths.extend(filter_spec.join_paths or [])
             stmt = filter_spec.apply(stmt)
 
-        if search_spec:
-            join_paths.extend(search_spec.join_paths)
+        if search_spec and not search_spec.is_empty:
+            join_paths.extend(search_spec.join_paths or [])
             stmt = search_spec.apply(stmt)
 
-        if ordering_spec:
-            join_paths.extend(ordering_spec.join_paths)
+        if ordering_spec and ordering_spec.is_applicable:
+            join_paths.extend(ordering_spec.join_paths or [])
             stmt = ordering_spec.apply(stmt)
 
         stmt = pagination_spec.apply(stmt)

@@ -7,10 +7,8 @@ from apps.soil_laboratory.models import MaterialType
 from repositories.base import (
     ArchiveByStatusMixin,
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     UpdateMixin
@@ -24,8 +22,6 @@ class MaterialTypeLoadOptions(str, Enum):
 class MaterialTypeRepository(
     BaseRepository[MaterialType, MaterialTypeLoadOptions],
     ExistsMixin[MaterialType],
-    CountMixin[MaterialType],
-    LookupMixin[MaterialType],
     ReadPaginatedMixin[MaterialType, MaterialTypeLoadOptions],
     ReadByIdMixin[MaterialType, MaterialTypeLoadOptions],
     CreateMixin[MaterialType],

@@ -10,9 +10,12 @@ from apps.soil_laboratory.schemas.sample import (
     SampleListItemResponse,
     SamplePaginatedListResponse
 )
-from apps.soil_laboratory.specifications import SampleFilterSpecification, SampleSearchSpecification
+from apps.soil_laboratory.specifications import (
+    SampleFilterSpecification,
+    SampleOrderingSpecification,
+    SampleSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError
-from specifications.ordering import OrderingSpecification
 from specifications.pagination import PaginationSpecification
 
 
@@ -77,11 +80,7 @@ class SampleService:
 
         sample_entities = await self.sample_repo.get_all_paginated_n(
             PaginationSpecification(page_number, page_size),
-            OrderingSpecification(
-                Sample,
-                default_ordering=[Sample.received_at.desc(), ],
-                ordering=ordering
-            ),
+            SampleOrderingSpecification(ordering),
             filter_spec,
             search_spec,
             include=[

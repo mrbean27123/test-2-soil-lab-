@@ -7,10 +7,8 @@ from apps.soil_laboratory.models import Parameter
 from repositories.base import (
     ArchiveByStatusMixin,
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     UpdateMixin
@@ -25,8 +23,6 @@ class ParameterLoadOptions(str, Enum):
 class ParameterRepository(
     BaseRepository[Parameter, ParameterLoadOptions],
     ExistsMixin[Parameter],
-    CountMixin[Parameter],
-    LookupMixin[Parameter],
     ReadPaginatedMixin[Parameter, ParameterLoadOptions],
     ReadByIdMixin[Parameter, ParameterLoadOptions],
     CreateMixin[Parameter],

@@ -1,13 +1,14 @@
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Any
 
 from sqlalchemy import BinaryExpression, Select, and_, or_
 from sqlalchemy.orm import InstrumentedAttribute
 
 from interfaces.specifications import FilterSpecificationInterface
+from specifications.mixins import QueryParamParsingMixin
 
 
-class FilteringSpecificationBase(FilterSpecificationInterface):
+class FilteringSpecificationBase(FilterSpecificationInterface, QueryParamParsingMixin):
     """Generic specification for applying validated filtering to SQLAlchemy queries."""
 
     @dataclass(slots=True)
@@ -19,7 +20,7 @@ class FilteringSpecificationBase(FilterSpecificationInterface):
     def __init__(
         self,
         filters: list[_Filter] | None = None,
-        join_paths: list[Type] | None = None
+        join_paths: list[type] | None = None
     ):
         self._filters = filters or []
         self._join_paths = join_paths or []
@@ -27,7 +28,7 @@ class FilteringSpecificationBase(FilterSpecificationInterface):
         self._filter_clauses = self._build_clauses(self._filters)
 
     @property
-    def join_paths(self) -> list[Type]:
+    def join_paths(self) -> list[type]:
         """Get list of join paths."""
         return self._join_paths
 
@@ -113,29 +114,3 @@ class FilteringSpecificationBase(FilterSpecificationInterface):
                 return attr.like(value)
             case _:
                 raise ValueError(f"Unsupported filtering operator: {operator}")
-
-    @staticmethod
-    def _extract_list_from_query_param(value: str | None) -> list[str]:
-        """
-        Parses a comma-separated query parameter string into a list of unique, trimmed values.
-
-        Args:
-            value: The raw query parameter string (e.g., "1, 2, 3" or None).
-
-        Returns:
-            A list of unique, stripped strings. Returns an empty list if the input is None or empty.
-        """
-        if not value:
-            return []
-
-        seen = set()
-        result = []
-
-        for item in value.split(","):
-            item = item.strip()
-
-            if item and item not in seen:
-                seen.add(item)
-                result.append(item)
-
-        return result

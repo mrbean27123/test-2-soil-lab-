@@ -1,14 +1,13 @@
 from apps.soil_laboratory.models import Material, MaterialSource
-from specifications.search import SearchSpecificationBase
+from specifications.search import SearchField, SearchSpecificationBaseN
 
 
-class SampleSearchSpecification(SearchSpecificationBase):
-    def __init__(self, query: str | None = None):
-        search_fields = []
+class SampleSearchSpecification(SearchSpecificationBaseN):
+    __search_fields__ = (
+        SearchField("materialName", Material.name, "icontains"),
+        SearchField("materialSourceName", MaterialSource.name, "icontains")
+    )
+    __join_paths__ = (Material, MaterialSource)
 
-        query = self._normalize_search_query(query)
-
-        search_fields.append(self._SearchField(MaterialSource.name, "icontains"))
-        search_fields.append(self._SearchField(Material.name, "icontains"))
-
-        super().__init__(query, search_fields, join_paths=[Material, MaterialSource])
+    def __init__(self, query: str | None):
+        super().__init__(query)

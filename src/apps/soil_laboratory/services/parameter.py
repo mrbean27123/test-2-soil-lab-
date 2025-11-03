@@ -9,9 +9,11 @@ from apps.soil_laboratory.schemas.parameter import (
     ParameterListItemResponse,
     ParameterPaginatedListResponse
 )
-from apps.soil_laboratory.specifications import ParameterSearchSpecification
+from apps.soil_laboratory.specifications import (
+    ParameterOrderingSpecification,
+    ParameterSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError
-from specifications.ordering import OrderingSpecification
 from specifications.pagination import PaginationSpecification
 
 
@@ -42,11 +44,7 @@ class ParameterService:
 
         parameter_entities = await self.parameter_repo.get_all_paginated_n(
             PaginationSpecification(page_number, page_size),
-            OrderingSpecification(
-                Parameter,
-                default_ordering=[Parameter.name.asc(), ],
-                ordering=ordering
-            ),
+            ParameterOrderingSpecification(ordering),
             search_spec=search_spec
         )
         response_items = [
