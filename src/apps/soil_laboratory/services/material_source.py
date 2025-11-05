@@ -10,11 +10,12 @@ from apps.soil_laboratory.schemas.material_source import (
     MaterialSourcePaginatedListResponse
 )
 from apps.soil_laboratory.specifications import (
+    MaterialSourceFilterSpecification,
     MaterialSourceOrderingSpecification,
-    MaterialSourceSearchSpecification
+    MaterialSourceSearchSpecification,
+    PaginationSpecification
 )
 from core.exceptions.database import EntityNotFoundError
-from specifications.pagination import PaginationSpecification
 
 
 class MaterialSourceService:
@@ -40,17 +41,19 @@ class MaterialSourceService:
         ordering: str | None = None,
         q: str | None = None
     ) -> MaterialSourcePaginatedListResponse:
+        pagination_spec = PaginationSpecification(page_number, page_size)
+        ordering_spec = MaterialSourceOrderingSpecification(ordering)
+        filter_spec = MaterialSourceFilterSpecification()
         search_spec = MaterialSourceSearchSpecification(q)
 
-        total_material_sources = await self.material_source_repo.get_count_n(
-            search_spec=search_spec
-        )
-        total_pages = max((total_material_sources + page_size - 1) // page_size, 1)
+        total_material_sources = await self.material_source_repo.get_count(filter_spec, search_spec)
+        total_pages = pagination_spec.get_total_pages(total_material_sources)
 
-        material_source_entities = await self.material_source_repo.get_all_paginated_n(
-            PaginationSpecification(page_number, page_size),
-            MaterialSourceOrderingSpecification(ordering),
-            search_spec=search_spec
+        material_source_entities = await self.material_source_repo.get_all_paginated(
+            pagination_spec,
+            ordering_spec,
+            filter_spec,
+            search_spec
         )
         response_items = [
             MaterialSourceListItemResponse.model_validate(material_source)

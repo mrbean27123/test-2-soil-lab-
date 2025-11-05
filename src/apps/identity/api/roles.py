@@ -7,8 +7,7 @@ from apps.identity.dependencies.services import get_role_service
 from apps.identity.schemas import (
     RoleCreate,
     RoleDetailResponse,
-    RoleListResponse,
-    RoleLookupResponse,
+    RolePaginatedListResponse,
     RoleUpdate,
     UserData
 )
@@ -18,24 +17,72 @@ from apps.identity.services import RoleService
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 
-@router.get("/lookups", response_model=list[RoleLookupResponse])
+@router.get(
+    "/lookups",
+    response_model=RolePaginatedListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a paginated list of role lookups"
+)
 async def get_role_lookups_list(
-    limit: int | None = Query(75, ge=1, le=500),
-    search: str | None = Query(None, min_length=2, max_length=50),
+    # Pagination
+    page_number: int = Query(1, alias="page[number]", ge=1, description="Page number"),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=50,
+        alias="page[size]",
+        description="Number of items per page"
+    ),
+    # Ordering & Search
+    ordering: str | None = Query(
+        None,
+        description="Ordering field (prefix with '-' for descending)"
+    ),
+    q: str | None = Query(None, description="Full-text search query across main searchable fields"),
+    # Dependencies
     role_service: RoleService = Depends(get_role_service),
     current_user: UserData = Depends(require_login())
-) -> list[RoleLookupResponse]:
-    return await role_service.get_role_lookup_options(limit=limit, search=search)
+) -> RolePaginatedListResponse:
+    return await role_service.get_roles_paginated(
+        page_number=page_number,
+        page_size=page_size,
+        ordering=ordering,
+        q=q
+    )
 
 
-@router.get("/", response_model=RoleListResponse)
+@router.get(
+    "/",
+    response_model=RolePaginatedListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a paginated list of roles"
+)
 async def get_roles_list(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
+    # Pagination
+    page_number: int = Query(1, alias="page[number]", ge=1, description="Page number"),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=20,
+        alias="page[size]",
+        description="Number of items per page"
+    ),
+    # Ordering & Search
+    ordering: str | None = Query(
+        None,
+        description="Ordering field (prefix with '-' for descending)"
+    ),
+    q: str | None = Query(None, description="Full-text search query across main searchable fields"),
+    # Dependencies
     role_service: RoleService = Depends(get_role_service),
     current_user: UserData = Depends(require_superuser())
-) -> RoleListResponse:
-    return await role_service.get_roles_paginated(page=page, per_page=per_page)
+) -> RolePaginatedListResponse:
+    return await role_service.get_roles_paginated(
+        page_number=page_number,
+        page_size=page_size,
+        ordering=ordering,
+        q=q
+    )
 
 
 @router.post("/", response_model=RoleDetailResponse, status_code=status.HTTP_201_CREATED)

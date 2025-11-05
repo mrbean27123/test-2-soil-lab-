@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from apps.identity.dto import RoleCreateDTO, RoleUpdateDTO
-from schemas.base import InputSchemaBase, PaginatedListResponseBase, SchemaBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, ResponseSchemaBase
 from schemas.mixins import ReferenceEntitySchemaMetadataMixin
 from validation.common import validate_description, validate_entity_name
 
@@ -56,10 +56,7 @@ class RoleUpdate(RoleInputSchemaBase):
         return RoleUpdateDTO(**self.model_dump(exclude={"permission_ids", }, exclude_unset=True))
 
 
-class RoleResponseBase(SchemaBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+RoleResponseBase = ResponseSchemaBase[UUID]
 
 
 class RoleLookupResponse(RoleResponseBase):
@@ -87,5 +84,5 @@ class RoleListItemResponse(RoleResponseBase, ReferenceEntitySchemaMetadataMixin)
     permissions: list["PermissionShortResponse"]
 
 
-class RoleListResponse(PaginatedListResponseBase[RoleListItemResponse]):
+class RolePaginatedListResponse(PaginatedListResponseBase[RoleListItemResponse]):
     pass

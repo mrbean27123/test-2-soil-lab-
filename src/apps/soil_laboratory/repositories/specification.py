@@ -8,10 +8,8 @@ from apps.soil_laboratory.models import Material, Specification
 from repositories.base import (
     ArchiveByStatusMixin,
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     UpdateMixin
@@ -28,8 +26,6 @@ class SpecificationLoadOptions(str, Enum):
 class SpecificationRepository(
     BaseRepository[Specification, SpecificationLoadOptions],
     ExistsMixin[Specification],
-    CountMixin[Specification],
-    LookupMixin[Specification],
     ReadPaginatedMixin[Specification, SpecificationLoadOptions],
     ReadByIdMixin[Specification, SpecificationLoadOptions],
     CreateMixin[Specification],

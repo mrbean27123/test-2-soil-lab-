@@ -1,8 +1,8 @@
 from apps.soil_laboratory.models import Material, MaterialSource
-from specifications.search import SearchField, SearchSpecificationBaseN
+from specifications.search import SearchField, SearchSpecificationBase
 
 
-class SampleSearchSpecification(SearchSpecificationBaseN):
+class SampleSearchSpecification(SearchSpecificationBase):
     __search_fields__ = (
         SearchField("materialName", Material.name, "icontains"),
         SearchField("materialSourceName", MaterialSource.name, "icontains")

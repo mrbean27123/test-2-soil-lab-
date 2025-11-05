@@ -1,4 +1,9 @@
 from apps.soil_laboratory.specifications.filter.material import MaterialFilterSpecification
+from apps.soil_laboratory.specifications.filter.material_source import (
+    MaterialSourceFilterSpecification
+)
+from apps.soil_laboratory.specifications.filter.material_type import MaterialTypeFilterSpecification
+from apps.soil_laboratory.specifications.filter.parameter import ParameterFilterSpecification
 from apps.soil_laboratory.specifications.filter.sample import SampleFilterSpecification
 from apps.soil_laboratory.specifications.ordering.material import MaterialOrderingSpecification
 from apps.soil_laboratory.specifications.ordering.material_source import (
@@ -16,3 +21,4 @@ from apps.soil_laboratory.specifications.search.material_source import (
 from apps.soil_laboratory.specifications.search.material_type import MaterialTypeSearchSpecification
 from apps.soil_laboratory.specifications.search.parameter import ParameterSearchSpecification
 from apps.soil_laboratory.specifications.search.sample import SampleSearchSpecification
+from specifications.pagination import PaginationSpecification  # noqa: F401

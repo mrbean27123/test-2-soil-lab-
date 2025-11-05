@@ -8,13 +8,16 @@ from apps.identity.schemas import (
     RoleCreate,
     RoleDetailResponse,
     RoleListItemResponse,
-    RoleListResponse,
-    RoleLookupResponse,
-    RoleShortResponse,
+    RolePaginatedListResponse,
     RoleUpdate
 )
+from apps.identity.specifications import (
+    PaginationSpecification,
+    RoleFilterSpecification,
+    RoleOrderingSpecification,
+    RoleSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError, RelatedEntitiesNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria, SearchCriteria
 
 
 class RoleService:
@@ -29,48 +32,49 @@ class RoleService:
         self.permission_repo = permission_repo
 
     async def get_role_by_id(self, role_id: UUID) -> RoleDetailResponse:
-        role = await self.role_repo.get_by_id(
-            role_id,
-            include=[RoleLoadOptions.PERMISSIONS, ]
-        )
+        role = await self.role_repo.get_by_id(role_id, include=[RoleLoadOptions.PERMISSIONS, ])
 
         if not role:
             raise EntityNotFoundError(Role, role_id)
 
         return RoleDetailResponse.model_validate(role)
 
-    async def get_role_lookup_options(
+    # async def get_role_lookup_options(
+    #     self,
+    #     page_number: int,
+    #     page_size: int,
+    #     ordering: str | None = None,
+    #     q: str | None = None
+    # ) -> RolePaginatedLookupListResponse:
+    #     ...
+
+    async def get_roles_paginated(
         self,
-        limit: int = 50,
-        offset: int = 0,
-        search: str | None = None
-    ) -> list[RoleLookupResponse]:
-        role_entities = await self.role_repo.get_for_lookup(
-            PaginationCriteria(limit, offset),
-            SearchCriteria(search, Role.name),
-            OrderCriteria(Role.name)
-        )
-        response_items = [RoleLookupResponse.model_validate(role) for role in role_entities]
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
+    ) -> RolePaginatedListResponse:
+        pagination_spec = PaginationSpecification(page_number, page_size)
+        ordering_spec = RoleOrderingSpecification(ordering)
+        filter_spec = RoleFilterSpecification()
+        search_spec = RoleSearchSpecification(q)
 
-        return response_items
-
-    async def get_roles_paginated(self, page: int, per_page: int) -> RoleListResponse:
-        total_roles = await self.role_repo.get_count(
-            where_conditions=[Role.archived_at == None, ]
-        )
-        total_pages = max((total_roles + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_roles = await self.role_repo.get_count(filter_spec, search_spec)
+        total_pages = pagination_spec.get_total_pages(total_roles)
 
         role_entities = await self.role_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=[Role.archived_at == None, ],
+            pagination_spec,
+            ordering_spec,
+            filter_spec,
+            search_spec,
             include=[RoleLoadOptions.PERMISSIONS, ]
         )
         response_items = [RoleListItemResponse.model_validate(role) for role in role_entities]
 
-        return RoleListResponse(
+        return RolePaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
             total_items=total_roles
         )
@@ -79,14 +83,12 @@ class RoleService:
         role = await self.role_repo.create(role_data.to_dto())
 
         if role_data.permission_ids is not None:
-            await self.db.flush()
             await self.db.refresh(role, attribute_names=["permissions"])
-
             await self._set_role_permissions(role, role_data.permission_ids)
 
         await self.db.commit()
 
-        return RoleDetailResponse.model_validate(role)
+        return await self.get_role_by_id(role.id)
 
     async def update_role(self, role_id: UUID, role_data: RoleUpdate) -> RoleDetailResponse:
         role = await self.role_repo.update(role_id, role_data.to_dto())
@@ -96,7 +98,6 @@ class RoleService:
 
         if role_data.permission_ids is not None:
             await self.db.refresh(role, attribute_names=["permissions"])
-
             await self._set_role_permissions(role, role_data.permission_ids)
 
         await self.db.commit()
@@ -123,11 +124,7 @@ class RoleService:
 
         return await self.get_role_by_id(role_id)
 
-    async def _set_role_permissions(
-        self,
-        role: Role,
-        permission_ids: list[UUID]
-    ) -> None:
+    async def _set_role_permissions(self, role: Role, permission_ids: list[UUID]) -> None:
         if not permission_ids:
             role.permissions = []
             return

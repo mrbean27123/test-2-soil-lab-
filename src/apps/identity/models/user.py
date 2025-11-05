@@ -51,7 +51,8 @@ class User(BaseORM, BusinessEntityMetadataMixin):
         email: str,
         raw_password: str,
         is_active: bool = True,
-        is_superuser: bool = False
+        is_superuser: bool = False,
+        id: uuid.UUID | None = None
     ) -> Self:
         """
         Factory method to create a new User instance.
@@ -60,6 +61,7 @@ class User(BaseORM, BusinessEntityMetadataMixin):
         required attributes.
         """
         user = cls(
+            id=id if id is not None else uuid.uuid4(),
             first_name=first_name,
             last_name=last_name,
             email=email,

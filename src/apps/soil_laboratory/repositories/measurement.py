@@ -6,11 +6,9 @@ from sqlalchemy.orm import Load, selectinload
 from apps.soil_laboratory.models import Measurement
 from repositories.base import (
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
     HardDeleteMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     SoftDeleteMixin,
@@ -25,8 +23,6 @@ class MeasurementLoadOptions(str, Enum):
 class MeasurementRepository(
     BaseRepository[Measurement, MeasurementLoadOptions],
     ExistsMixin[Measurement],
-    CountMixin[Measurement],
-    LookupMixin[Measurement],
     ReadPaginatedMixin[Measurement, MeasurementLoadOptions],
     ReadByIdMixin[Measurement, MeasurementLoadOptions],
     CreateMixin[Measurement],

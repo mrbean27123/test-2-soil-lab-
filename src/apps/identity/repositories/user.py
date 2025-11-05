@@ -8,10 +8,8 @@ from apps.identity.dto import UserCreateDTO
 from apps.identity.models import User
 from repositories.base import (
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     SoftDeleteMixin,
@@ -29,8 +27,6 @@ class UserLoadOptions(str, Enum):
 class UserRepository(
     BaseRepository[User, UserLoadOptions],
     ExistsMixin[User],
-    CountMixin[User],
-    LookupMixin[User],
     ReadPaginatedMixin[User, UserLoadOptions],
     ReadByIdMixin[User, UserLoadOptions],
     CreateMixin[User],

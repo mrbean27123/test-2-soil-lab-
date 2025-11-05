@@ -7,10 +7,8 @@ from apps.identity.models import Permission
 from repositories.base import (
     ArchiveByStatusMixin,
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     UpdateMixin
@@ -24,8 +22,6 @@ class PermissionLoadOptions(str, Enum):
 class PermissionRepository(
     BaseRepository[Permission, PermissionLoadOptions],
     ExistsMixin[Permission],
-    CountMixin[Permission],
-    LookupMixin[Permission],
     ReadPaginatedMixin[Permission, PermissionLoadOptions],
     ReadByIdMixin[Permission, PermissionLoadOptions],
     CreateMixin[Permission],

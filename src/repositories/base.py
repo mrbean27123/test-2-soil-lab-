@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Generic, Protocol, Type, TypeVar, runtime_checkable
@@ -43,60 +42,6 @@ class IsBaseRepository(Protocol[ModelT]):
         include: list[LoadOptionsT] | None = None
     ) -> Select:
         pass
-
-
-@dataclass(frozen=True)
-class PaginationCriteria:
-    """Pagination criteria for pagination."""
-    limit: int
-    offset: int = 0
-
-    def __post_init__(self):
-        if self.limit <= 0:
-            raise ValueError("PaginationCriteria 'limit' must be positive")
-        if self.offset < 0:
-            raise ValueError("PaginationCriteria 'offset' cannot be negative")
-
-
-@dataclass(frozen=True)
-class SearchCriteria:
-    """Search criteria for text-based filtering."""
-    query: str | None
-    field: InstrumentedAttribute
-    min_query_length: int | None = None
-    is_case_sensitive: bool = False
-
-    def __post_init__(self):
-        if (self.min_query_length is not None) and not (1 <= self.min_query_length <= 7):
-            raise ValueError("SearchCriteria 'min_query_length' must be in range 1-7")
-
-        if self.query is not None:
-            normalized_query = self.query.strip()
-
-            if not normalized_query:
-                object.__setattr__(self, "query", None)
-                return
-
-            if self.min_query_length is not None and len(normalized_query) < self.min_query_length:
-                object.__setattr__(self, "query", None)
-                return
-
-            if not self.is_case_sensitive:
-                normalized_query = normalized_query.lower()
-
-            object.__setattr__(self, "query", normalized_query)
-
-    @property
-    def is_applicable(self) -> bool:
-        """Check if search criteria should be applied."""
-        return self.query is not None
-
-
-@dataclass(frozen=True)
-class OrderCriteria:
-    """Ordering criteria for query results."""
-    field: InstrumentedAttribute
-    ascending: bool = True
 
 
 class BaseRepository(Generic[ModelT, LoadOptionsT]):
@@ -162,77 +107,6 @@ class ExistsMixin(Generic[ModelT]):
         return result.scalar()
 
 
-class CountMixin(Generic[ModelT]):
-    async def get_count_n(
-        self: IsBaseRepository[ModelT],
-        filter_spec: FilterSpecificationInterface | None = None,
-        search_spec: SearchSpecificationInterface | None = None
-    ) -> int:
-        stmt = select(func.count(self.model.id))
-        join_paths = set()
-
-        if filter_spec:
-            join_paths.update(filter_spec.join_paths)
-            stmt = filter_spec.apply(stmt)
-
-        if search_spec:
-            join_paths.update(search_spec.join_paths)
-            stmt = search_spec.apply(stmt)
-
-        # Perform JOINs. Required to search by nested objects' fields
-        # for path in join_paths:
-        #     stmt = stmt.join(path)
-
-        result = await self.db.execute(stmt)
-
-        return result.scalar_one()
-
-    async def get_count(
-        self: IsBaseRepository[ModelT],
-        where_conditions: list[BinaryExpression] | None = None
-    ) -> int:
-        stmt = select(func.count(self.model.id)).where(and_(*where_conditions))
-        result = await self.db.execute(stmt)
-
-        return result.scalar_one()
-
-
-class LookupMixin(Generic[ModelT]):
-    async def get_for_lookup(
-        self: IsBaseRepository[ModelT],
-        pagination: PaginationCriteria,
-        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
-        search: SearchCriteria | None = None,
-        order: OrderCriteria | None = None,
-        include: list[LoadOptionsT] | None = None
-    ) -> list[ModelT]:
-        stmt = select(self.model)
-
-        if where_conditions:
-            stmt = stmt.where(and_(*where_conditions))
-
-        # TODO: move it inside SearchCriteria -> stmt = SearchCriteria.apply(stmt)
-        if search and search.is_applicable:
-            search_pattern = f"%{search.query}%"
-
-            if search.is_case_sensitive:
-                stmt = stmt.where(search.field.like(search_pattern))
-            else:
-                stmt = stmt.where(search.field.ilike(search_pattern))
-
-        stmt = self._apply_load_options(stmt, include)
-
-        # TODO: move it inside OrderCriteria -> stmt = OrderCriteria.apply(stmt)
-        if order:
-            stmt = stmt.order_by(order.field.asc() if order.ascending else order.field.desc())
-
-        stmt = stmt.offset(pagination.offset).limit(pagination.limit)
-
-        result = await self.db.execute(stmt)
-
-        return list(result.scalars().all())
-
-
 class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
     """
     Generic pagination mixin for SQLAlchemy-based CRUD repositories.
@@ -243,7 +117,7 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
     Should be combined with a CRUD base class providing `self.model` and `self.db`.
     """
 
-    async def get_count_n(
+    async def get_count(
         self: IsBaseRepository[ModelT],
         filter_spec: FilterSpecificationInterface | None = None,
         search_spec: SearchSpecificationInterface | None = None
@@ -268,7 +142,7 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
 
         return result.scalar_one()
 
-    async def get_all_paginated_n(
+    async def get_all_paginated(
         self: IsBaseRepository[ModelT],
         pagination_spec: PaginationSpecificationInterface,
         ordering_spec: OrderingSpecificationInterface | None = None,
@@ -329,51 +203,13 @@ class ReadPaginatedMixin(Generic[ModelT, LoadOptionsT]):
     #
     #     return stmt
 
-    async def get_all_paginated(
-        self: IsBaseRepository[ModelT],
-        pagination: PaginationCriteria,
-        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
-        order: OrderCriteria | None = None,
-        include: list[LoadOptionsT] | None = None
-    ) -> list[ModelT]:
-        """
-        Retrieve a paginated list of `ModelT`.
-
-        This method fetches a subset of SQLAlchemy ORM model instances of type `ModelT` from the
-        database based on the given pagination parameters.
-        """
-        stmt = select(self.model)
-
-        if where_conditions:
-            stmt = stmt.where(and_(*where_conditions))
-
-        if order:
-            stmt = stmt.order_by(order.field.asc() if order.ascending else order.field.desc())
-
-        stmt = self._apply_load_options(stmt, include)
-        stmt = stmt.offset(pagination.offset).limit(pagination.limit)
-        result = await self.db.execute(stmt)
-
-        return list(result.scalars().all())
-
-    async def get_all(
-        self: IsBaseRepository[ModelT],
-        where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
-        order: OrderCriteria | None = None,
-        include: list[LoadOptionsT] | None = None
-    ) -> list[ModelT]:
-        stmt = select(self.model)
-
-        if where_conditions:
-            stmt = stmt.where(and_(*where_conditions))
-
-        if order:
-            stmt = stmt.order_by(order.field.asc() if order.ascending else order.field.desc())
-
-        stmt = self._apply_load_options(stmt, include)
-        result = await self.db.execute(stmt)
-
-        return list(result.scalars().all())
+    # async def get_all(
+    #     self: IsBaseRepository[ModelT],
+    #     where_conditions: list[BinaryExpression | BooleanClauseList] | None = None,
+    #     order: OrderSpecification | None = None,
+    #     include: list[LoadOptionsT] | None = None
+    # ) -> list[ModelT]:
+    #     ...
 
 
 class ReadByIdMixin(Generic[ModelT, LoadOptionsT]):

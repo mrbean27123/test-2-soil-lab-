@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from apps.identity.dependencies.auth import require_login, require_permission
+from apps.identity.dependencies.auth import require_login
 from apps.identity.schemas import UserData
 from apps.soil_laboratory.dependencies.services import get_material_service
 from apps.soil_laboratory.schemas.material import MaterialPaginatedListResponse
@@ -35,7 +35,7 @@ async def get_material_lookups_list(
     ),
     # Dependencies
     material_service: MaterialService = Depends(get_material_service),
-    current_user: UserData = Depends(require_permission(require_login()))
+    current_user: UserData = Depends(require_login())
 ) -> MaterialPaginatedListResponse:
     return await material_service.get_materials_paginated(
         page_number=page_number,

@@ -13,13 +13,16 @@ from apps.identity.schemas import (
     UserCreate,
     UserDetailResponse,
     UserListItemResponse,
-    UserListResponse,
-    UserLookupResponse,
-    UserShortResponse,
+    UserPaginatedListResponse,
     UserUpdate
 )
+from apps.identity.specifications import (
+    PaginationSpecification,
+    UserFilterSpecification,
+    UserOrderingSpecification,
+    UserSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError, RelatedEntitiesNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria, SearchCriteria
 
 
 class UserService:
@@ -46,40 +49,35 @@ class UserService:
 
         return UserDetailResponse.model_validate(user)
 
-    async def get_user_lookup_options(
+    async def get_users_paginated(
         self,
-        limit: int = 75,
-        offset: int = 0,
-        search: str | None = None
-    ) -> list[UserLookupResponse]:
-        user_entities = await self.user_repo.get_for_lookup(
-            PaginationCriteria(limit, offset),
-            SearchCriteria(search, User.email),
-            OrderCriteria(User.email)
-        )
-        response_items = [UserLookupResponse.model_validate(user) for user in user_entities]
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
+    ) -> UserPaginatedListResponse:
+        pagination_spec = PaginationSpecification(page_number, page_size)
+        ordering_spec = UserOrderingSpecification(ordering)
+        filter_spec = UserFilterSpecification()
+        search_spec = UserSearchSpecification(q)
 
-        return response_items
-
-    async def get_users_paginated(self, page: int, per_page: int) -> UserListResponse:
-        total_users = await self.user_repo.get_count(
-            where_conditions=[User.deleted_at == None, ]
-        )
-        total_pages = max((total_users + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_users = await self.user_repo.get_count(filter_spec, search_spec)
+        total_pages = pagination_spec.get_total_pages(total_users)
 
         user_entities = await self.user_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=[User.deleted_at == None, ],
+            pagination_spec,
+            ordering_spec,
+            filter_spec,
+            search_spec,
             include=[UserLoadOptions.ROLES, UserLoadOptions.PERMISSIONS, ]
         )
         response_items = [UserListItemResponse.model_validate(user) for user in user_entities]
 
-        return UserListResponse(
+        return UserPaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
-            total_items=total_users,
+            total_items=total_users
         )
 
     async def create_user(self, user_data: UserCreate) -> UserDetailResponse:
@@ -135,11 +133,7 @@ class UserService:
 
         return await self.get_user_by_id(user_id)
 
-    async def _set_user_roles(
-        self,
-        user: User,
-        role_ids: list[UUID]
-    ) -> None:
+    async def _set_user_roles(self, user: User, role_ids: list[UUID]) -> None:
         if not role_ids:
             user.roles = []
             return
@@ -155,11 +149,7 @@ class UserService:
 
         user.roles = roles
 
-    async def _set_user_permissions(
-        self,
-        user: User,
-        permission_ids: list[UUID]
-    ) -> None:
+    async def _set_user_permissions(self, user: User, permission_ids: list[UUID]) -> None:
         if not permission_ids:
             user.permissions = []
             return

@@ -1,15 +1,11 @@
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from apps.identity.dto import PermissionCreateDTO, PermissionUpdateDTO
-from schemas.base import InputSchemaBase, PaginatedListResponseBase, SchemaBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, ResponseSchemaBase
 from schemas.mixins import ReferenceEntitySchemaMetadataMixin
-from validation.common import (
-    validate_description,
-    validate_entity_name,
-    validate_permission_system_name
-)
+from validation.common import validate_description, validate_entity_name
 
 
 PERMISSION_CODE_CONSTRAINTS = {"min_length": 5, "max_length": 255}
@@ -55,10 +51,7 @@ class PermissionUpdate(PermissionInputSchemaBase):
         return PermissionUpdateDTO(**self.model_dump(exclude_unset=True))
 
 
-class PermissionResponseBase(SchemaBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+PermissionResponseBase = ResponseSchemaBase[UUID]
 
 
 class PermissionLookupResponse(PermissionResponseBase):
@@ -81,5 +74,5 @@ class PermissionListItemResponse(PermissionShortResponse, ReferenceEntitySchemaM
     pass
 
 
-class PermissionListResponse(PaginatedListResponseBase[PermissionListItemResponse]):
+class PermissionPaginatedListResponse(PaginatedListResponseBase[PermissionListItemResponse]):
     pass

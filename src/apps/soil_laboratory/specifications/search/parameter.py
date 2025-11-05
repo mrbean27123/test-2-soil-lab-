@@ -1,8 +1,8 @@
 from apps.soil_laboratory.models import Parameter
-from specifications.search import SearchField, SearchSpecificationBaseN
+from specifications.search import SearchField, SearchSpecificationBase
 
 
-class ParameterSearchSpecification(SearchSpecificationBaseN):
+class ParameterSearchSpecification(SearchSpecificationBase):
     __search_fields__ = (
         SearchField("name", Parameter.name, "icontains"),
         SearchField("units", Parameter.units, "icontains"),

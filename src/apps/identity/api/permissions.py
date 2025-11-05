@@ -7,8 +7,7 @@ from apps.identity.dependencies.services import get_permission_service
 from apps.identity.schemas import (
     PermissionCreate,
     PermissionDetailResponse,
-    PermissionListResponse,
-    PermissionLookupResponse,
+    PermissionPaginatedListResponse,
     PermissionUpdate,
     UserData
 )
@@ -18,24 +17,72 @@ from apps.identity.services import PermissionService
 router = APIRouter(prefix="/permissions", tags=["permissions"])
 
 
-@router.get("/lookups", response_model=list[PermissionLookupResponse])
+@router.get(
+    "/lookups",
+    response_model=PermissionPaginatedListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a paginated list of permission lookups"
+)
 async def get_permission_lookups_list(
-    limit: int | None = Query(75, ge=1, le=500),
-    search: str | None = Query(None, min_length=2, max_length=50),
+    # Pagination
+    page_number: int = Query(1, alias="page[number]", ge=1, description="Page number"),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=100,
+        alias="page[size]",
+        description="Number of items per page"
+    ),
+    # Ordering & Search
+    ordering: str | None = Query(
+        None,
+        description="Ordering field (prefix with '-' for descending)"
+    ),
+    q: str | None = Query(None, description="Full-text search query across main searchable fields"),
+    # Dependencies
     permission_service: PermissionService = Depends(get_permission_service),
     current_user: UserData = Depends(require_login())
-) -> list[PermissionLookupResponse]:
-    return await permission_service.get_permission_lookup_options(limit=limit, search=search)
+) -> PermissionPaginatedListResponse:
+    return await permission_service.get_permissions_paginated(
+        page_number=page_number,
+        page_size=page_size,
+        ordering=ordering,
+        q=q
+    )
 
 
-@router.get("/", response_model=PermissionListResponse)
+@router.get(
+    "/",
+    response_model=PermissionPaginatedListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a paginated list of permissions"
+)
 async def get_permissions_list(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
+    # Pagination
+    page_number: int = Query(1, alias="page[number]", ge=1, description="Page number"),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=20,
+        alias="page[size]",
+        description="Number of items per page"
+    ),
+    # Ordering & Search
+    ordering: str | None = Query(
+        None,
+        description="Ordering field (prefix with '-' for descending)"
+    ),
+    q: str | None = Query(None, description="Full-text search query across main searchable fields"),
+    # Dependencies
     permission_service: PermissionService = Depends(get_permission_service),
     current_user: UserData = Depends(require_superuser())
-) -> PermissionListResponse:
-    return await permission_service.get_permissions_paginated(page=page, per_page=per_page)
+) -> PermissionPaginatedListResponse:
+    return await permission_service.get_permissions_paginated(
+        page_number=page_number,
+        page_size=page_size,
+        ordering=ordering,
+        q=q
+    )
 
 
 @router.post("/", response_model=PermissionDetailResponse, status_code=status.HTTP_201_CREATED)

@@ -17,15 +17,12 @@ from apps.soil_laboratory.repositories.test_result import (
 from apps.soil_laboratory.schemas.test_result import (
     TestResultCreate,
     TestResultDetailResponse,
-    TestResultListItemResponse,
-    TestResultPaginatedListResponse,
     TestResultShortResponse
 )
 from apps.soil_laboratory.services.test_result.strategies import (
     resolve_strategies_and_get_test_result_create_dto
 )
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria
 
 
 class TestResultService:
@@ -60,36 +57,6 @@ class TestResultService:
             raise EntityNotFoundError(TestResult, test_id)
 
         return TestResultDetailResponse.model_validate(test)
-
-    async def get_tests_paginated(
-        self,
-        page: int,
-        per_page: int
-    ) -> TestResultPaginatedListResponse:
-        conditions = [TestResult.deleted_at == None, ]
-
-        total_tests = await self.test_result_repo.get_count(where_conditions=conditions)
-        total_pages = max((total_tests + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
-
-        test_entities = await self.test_result_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=conditions,
-            order=OrderCriteria(TestResult.created_at),
-            include=[
-                TestResultLoadOptions.SAMPLE__MATERIAL__MATERIAL_TYPE,
-                TestResultLoadOptions.SAMPLE__MATERIAL_SOURCE,
-                TestResultLoadOptions.PARAMETER
-            ]
-        )
-        response_items = [TestResultListItemResponse.model_validate(test) for test in test_entities]
-
-        return TestResultPaginatedListResponse(
-            data=response_items,
-            page=page,
-            total_pages=total_pages,
-            total_items=total_tests
-        )
 
     async def create_test(self, test_result_data: TestResultCreate) -> TestResultDetailResponse:
         sample: Sample = await self.sample_repo.get_by_id(

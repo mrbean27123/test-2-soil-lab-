@@ -11,12 +11,12 @@ from apps.soil_laboratory.schemas.sample import (
     SamplePaginatedListResponse
 )
 from apps.soil_laboratory.specifications import (
+    PaginationSpecification,
     SampleFilterSpecification,
     SampleOrderingSpecification,
     SampleSearchSpecification
 )
 from core.exceptions.database import EntityNotFoundError
-from specifications.pagination import PaginationSpecification
 
 
 class SampleService:
@@ -39,21 +39,6 @@ class SampleService:
 
         return SampleDetailResponse.model_validate(sample)
 
-    # async def get_sample_lookup_options(
-    #     self,
-    #     limit: int = 100,
-    #     offset: int = 0,
-    #     search: str | None = None
-    # ) -> list[SampleLookupResponse]:
-    #     sample_entities = await self.sample_repo.get_for_lookup(
-    #         PaginationCriteria(limit, offset),
-    #         search=SearchCriteria(search, Sample.received_at),
-    #         order=OrderCriteria(Sample.received_at)
-    #     )
-    #     response_items = [SampleLookupResponse.model_validate(sample) for sample in sample_entities]
-    #
-    #     return response_items
-
     async def get_samples_paginated(
         self,
         page_number: int,
@@ -66,6 +51,8 @@ class SampleService:
         material_source_id__eq: str | None = None,
         material_source_code__eq: str | None = None
     ) -> SamplePaginatedListResponse:
+        pagination_spec = PaginationSpecification(page_number, page_size)
+        ordering_spec = SampleOrderingSpecification(ordering)
         filter_spec = SampleFilterSpecification(
             material_type_id__eq=material_type_id__eq,
             material_type_code__eq=material_type_code__eq,
@@ -75,12 +62,12 @@ class SampleService:
         )
         search_spec = SampleSearchSpecification(q)
 
-        total_samples = await self.sample_repo.get_count_n(filter_spec, search_spec)
-        total_pages = max((total_samples + page_size - 1) // page_size, 1)
+        total_samples = await self.sample_repo.get_count(filter_spec, search_spec)
+        total_pages = pagination_spec.get_total_pages(total_samples)
 
-        sample_entities = await self.sample_repo.get_all_paginated_n(
-            PaginationSpecification(page_number, page_size),
-            SampleOrderingSpecification(ordering),
+        sample_entities = await self.sample_repo.get_all_paginated(
+            pagination_spec,
+            ordering_spec,
             filter_spec,
             search_spec,
             include=[

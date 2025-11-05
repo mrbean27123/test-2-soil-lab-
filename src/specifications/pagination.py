@@ -55,6 +55,10 @@ class PaginationSpecification(PaginationSpecificationInterface):
         """Returns the calculated `OFFSET` value (the number of rows to skip) for the SQL query."""
         return self._offset
 
+    def get_total_pages(self, total_items_count: int) -> int:
+        """Returns the total amount of pages for the given page size."""
+        return max((total_items_count + self._limit - 1) // self._limit, 1)
+
     def apply(self, stmt: Select) -> Select:
         """
         Applies the pagination (limit and offset) to the query.

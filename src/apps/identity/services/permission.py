@@ -8,12 +8,16 @@ from apps.identity.schemas import (
     PermissionCreate,
     PermissionDetailResponse,
     PermissionListItemResponse,
-    PermissionListResponse,
-    PermissionLookupResponse,
+    PermissionPaginatedListResponse,
     PermissionUpdate
 )
+from apps.identity.specifications import (
+    PaginationSpecification,
+    PermissionFilterSpecification,
+    PermissionOrderingSpecification,
+    PermissionSearchSpecification
+)
 from core.exceptions.database import EntityNotFoundError
-from repositories.base import OrderCriteria, PaginationCriteria, SearchCriteria
 
 
 class PermissionService:
@@ -29,43 +33,44 @@ class PermissionService:
 
         return PermissionDetailResponse.model_validate(permission)
 
-    async def get_permission_lookup_options(
+    # async def get_permission_lookup_options(
+    #     self,
+    #     page_number: int,
+    #     page_size: int,
+    #     ordering: str | None = None,
+    #     q: str | None = None
+    # ) -> PermissionPaginatedLookupListResponse:
+    #     ...
+
+    async def get_permissions_paginated(
         self,
-        limit: int = 100,
-        offset: int = 0,
-        search: str | None = None
-    ) -> list[PermissionLookupResponse]:
-        permission_entities = await self.permission_repo.get_for_lookup(
-            PaginationCriteria(limit, offset),
-            SearchCriteria(search, Permission.name),
-            OrderCriteria(Permission.name)
-        )
-        response_items = [
-            PermissionLookupResponse.model_validate(permission)
-            for permission in permission_entities
-        ]
+        page_number: int,
+        page_size: int,
+        ordering: str | None = None,
+        q: str | None = None
+    ) -> PermissionPaginatedListResponse:
+        pagination_spec = PaginationSpecification(page_number, page_size)
+        ordering_spec = PermissionOrderingSpecification(ordering)
+        filter_spec = PermissionFilterSpecification()
+        search_spec = PermissionSearchSpecification(q)
 
-        return response_items
-
-    async def get_permissions_paginated(self, page: int, per_page: int) -> PermissionListResponse:
-        total_permissions = await self.permission_repo.get_count(
-            where_conditions=[Permission.archived_at == None, ]
-        )
-        total_pages = max((total_permissions + per_page - 1) // per_page, 1)
-        offset = (page - 1) * per_page
+        total_permissions = await self.permission_repo.get_count(filter_spec, search_spec)
+        total_pages = pagination_spec.get_total_pages(total_permissions)
 
         permission_entities = await self.permission_repo.get_all_paginated(
-            PaginationCriteria(per_page, offset),
-            where_conditions=[Permission.archived_at == None, ]
+            pagination_spec,
+            ordering_spec,
+            filter_spec,
+            search_spec
         )
         response_items = [
             PermissionListItemResponse.model_validate(permission)
             for permission in permission_entities
         ]
 
-        return PermissionListResponse(
+        return PermissionPaginatedListResponse(
             data=response_items,
-            page=page,
+            page=page_number,
             total_pages=total_pages,
             total_items=total_permissions
         )

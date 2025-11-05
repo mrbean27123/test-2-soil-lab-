@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import ConfigDict, EmailStr, Field, field_validator
+from pydantic import EmailStr, Field, field_validator
 
 from apps.identity.dto import UserCreateDTO, UserUpdateDTO
-from schemas.base import InputSchemaBase, PaginatedListResponseBase, SchemaBase
+from schemas.base import InputSchemaBase, PaginatedListResponseBase, ResponseSchemaBase
 from schemas.mixins import BusinessEntitySchemaMetadataMixin, SoftDeleteMetadataSchemaMixin
 from validation.common import validate_person_full_name_part
 from validation.contact import validate_email
@@ -65,10 +65,7 @@ class UserUpdate(UserInputSchemaBase):
         )
 
 
-class UserResponseBase(SchemaBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+UserResponseBase = ResponseSchemaBase[UUID]
 
 
 class UserLookupResponse(UserResponseBase):
@@ -121,5 +118,5 @@ class UserListItemResponse(UserResponseBase, SoftDeleteMetadataSchemaMixin):
     permissions: list["PermissionDetailResponse"]
 
 
-class UserListResponse(PaginatedListResponseBase[UserListItemResponse]):
+class UserPaginatedListResponse(PaginatedListResponseBase[UserListItemResponse]):
     pass

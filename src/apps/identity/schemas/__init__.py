@@ -10,7 +10,7 @@ from apps.identity.schemas.permission import (
     PermissionCreate,
     PermissionDetailResponse,
     PermissionListItemResponse,
-    PermissionListResponse,
+    PermissionPaginatedListResponse,
     PermissionLookupResponse,
     PermissionShortResponse,
     PermissionUpdate
@@ -19,7 +19,7 @@ from apps.identity.schemas.role import (
     RoleCreate,
     RoleDetailResponse,
     RoleListItemResponse,
-    RoleListResponse,
+    RolePaginatedListResponse,
     RoleLookupResponse,
     RoleShortResponse,
     RoleUpdate
@@ -28,7 +28,7 @@ from apps.identity.schemas.user import (
     UserCreate,
     UserDetailResponse,
     UserListItemResponse,
-    UserListResponse,
+    UserPaginatedListResponse,
     UserLookupResponse,
     UserShortResponse,
     UserUpdate

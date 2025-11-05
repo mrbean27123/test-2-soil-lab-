@@ -1,7 +1,13 @@
+from uuid import UUID, uuid4
+
+from pydantic import Field
+
 from dto import CreateDTOBase, UpdateDTOBase
 
 
 class UserCreateDTO(CreateDTOBase):
+    id: UUID = Field(default_factory=uuid4)
+
     first_name: str
     last_name: str
 

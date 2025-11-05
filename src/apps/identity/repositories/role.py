@@ -7,10 +7,8 @@ from apps.identity.models import Role
 from repositories.base import (
     ArchiveByStatusMixin,
     BaseRepository,
-    CountMixin,
     CreateMixin,
     ExistsMixin,
-    LookupMixin,
     ReadByIdMixin,
     ReadPaginatedMixin,
     UpdateMixin
@@ -25,8 +23,6 @@ class RoleLoadOptions(str, Enum):
 class RoleRepository(
     BaseRepository[Role, RoleLoadOptions],
     ExistsMixin[Role],
-    CountMixin[Role],
-    LookupMixin[Role],
     ReadPaginatedMixin[Role, RoleLoadOptions],
     ReadByIdMixin[Role, RoleLoadOptions],
     CreateMixin[Role],

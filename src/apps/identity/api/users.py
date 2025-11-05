@@ -8,8 +8,8 @@ from apps.identity.schemas import (
     UserCreate,
     UserData,
     UserDetailResponse,
-    UserListResponse,
-    UserLookupResponse, UserUpdate
+    UserPaginatedListResponse,
+    UserUpdate
 )
 from apps.identity.services import UserService
 
@@ -17,24 +17,38 @@ from apps.identity.services import UserService
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/lookups", response_model=list[UserLookupResponse])
-async def get_user_lookups_list(
-    limit: int | None = Query(75, ge=1, le=500),
-    search: str | None = Query(None, min_length=2, max_length=50),
-    user_service: UserService = Depends(get_user_service),
-    current_user: UserData = Depends(require_login())
-) -> list[UserLookupResponse]:
-    return await user_service.get_user_lookup_options(limit=limit, search=search)
-
-
-@router.get("/", response_model=UserListResponse)
+@router.get(
+    "/",
+    response_model=UserPaginatedListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get a paginated list of users"
+)
 async def get_users_list(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=20),
+    # Pagination
+    page_number: int = Query(1, alias="page[number]", ge=1, description="Page number"),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=20,
+        alias="page[size]",
+        description="Number of items per page"
+    ),
+    # Ordering & Search
+    ordering: str | None = Query(
+        None,
+        description="Ordering field (prefix with '-' for descending)"
+    ),
+    q: str | None = Query(None, description="Full-text search query across main searchable fields"),
+    # Dependencies
     user_service: UserService = Depends(get_user_service),
     current_user: UserData = Depends(require_superuser())
-) -> UserListResponse:
-    return await user_service.get_users_paginated(page=page, per_page=per_page)
+) -> UserPaginatedListResponse:
+    return await user_service.get_users_paginated(
+        page_number=page_number,
+        page_size=page_size,
+        ordering=ordering,
+        q=q
+    )
 
 
 @router.post("/", response_model=UserDetailResponse, status_code=status.HTTP_201_CREATED)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from apps.identity.dependencies.auth import require_login, require_permission
+from apps.identity.dependencies.auth import require_login
 from apps.identity.schemas import UserData
 from apps.soil_laboratory.dependencies.services import get_material_type_service
 from apps.soil_laboratory.schemas.material_type import MaterialTypePaginatedListResponse
@@ -29,7 +29,7 @@ async def get_material_type_lookups_list(
     q: str | None = Query(None, description="Full-text search query across main searchable fields"),
     # Dependencies
     material_type_service: MaterialTypeService = Depends(get_material_type_service),
-    current_user: UserData = Depends(require_permission(require_login()))
+    current_user: UserData = Depends(require_login())
 ) -> MaterialTypePaginatedListResponse:
     return await material_type_service.get_material_types_paginated(
         page_number=page_number,
